@@ -65,7 +65,7 @@ def process_start_service(condition, queue, *args, **kw):
     service.name = proc_name
     service.condition = condition
     service.queue = queue
-    service.run(*args, **kw)
+    service.run(**kw)
 
 
 class WebSocketHandle(object):
@@ -98,6 +98,7 @@ class WebSocketHandle(object):
 
         if len(args) == 0:
             args = self.args
+
         kw.update(self.kw)
 
         p = Process(name='service',
@@ -106,6 +107,26 @@ class WebSocketHandle(object):
                     kwargs=kw,
                 )
         p.start()
+        self.process = p
+        self.close_wait()
+        self.send_entry_request()
+        self.client = self.make_client()
+        return p
+
+    def threadless_boot(self, condition=None, queue=None, *args, **kw):
+        '''
+        Start the process using provided or inherited arguments
+        '''
+        condition = condition or self.condition
+        queue = queue or self.queue
+
+        if len(args) == 0:
+            args = self.args
+
+        kw.update(self.kw)
+
+        p = process_start_service(condition, queue, *args, **kw)
+
         self.process = p
         self.close_wait()
         self.send_entry_request()

@@ -61,7 +61,6 @@ class WebSocketService(object):
     def create(self, ip=None, port=None):
         server_ip = ip or self.server_ip
         server_port = port or self.server_port
-
         self.server_ip = server_ip
         self.server_port = server_port
 

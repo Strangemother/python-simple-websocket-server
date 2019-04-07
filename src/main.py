@@ -18,14 +18,21 @@ parser.add_option("-i", "--serve",
                   help="run the service until system interupt.")
 parser.add_option("-c", "--config", dest="config",
                   help="Provide a config path")
+parser.add_option("-p", "--port", dest="port", type=int, default=8004,
+                  help="Provide a port")
+parser.add_option("-a", "--address", dest="address", type=str, default=None,
+                  help="Provide a ip")
 
 parsed = parser.parse_args()
 
 
 def process_run(options=None, *args, **kw):
-
+    kw['port'] = kw.get('port', options.port)
+    kw['ip'] = kw.get('ip', options.address)
+    args = ()
     h = WebSocketHandle(options, *args, **kw)
     h.boot()
+    #h.threadless_boot()
     return h
 
 

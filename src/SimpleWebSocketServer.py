@@ -740,6 +740,7 @@ class SimpleWebSocketServer(object):
 
             self.serve_hook(rList, wList)
 
+
 class SimpleSSLWebSocketServer(SimpleWebSocketServer):
 
     def __init__(self, host, port, websocketclass, certfile, keyfile, version=ssl.PROTOCOL_TLSv1):
