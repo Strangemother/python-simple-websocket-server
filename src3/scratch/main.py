@@ -2,7 +2,6 @@
 """
 This is a sample for qpython webapp
 """
-from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-f", "--file", dest="filename",
                   help="write report to FILE", metavar="FILE")
@@ -16,18 +15,17 @@ parser.add_option("-c", "--config", dest="config",
                   help="Provide a config path")
 parser.add_option("-p", "--port", dest="port", type=int, default=8004,
                   help="Provide a port")
-parser.add_option("-a", "--address", dest="ip", type=str, default=None,
+parser.add_option("-a", "--address", dest="address", type=str, default=None,
                   help="Provide a ip")
 
 parsed = parser.parse_args()
 
-from auto_server import run
 
 def process_run(options=None, *args, **kw):
     kw['port'] = kw.get('port', options.port)
-    kw['ip'] = kw.get('ip', options.ip)
+    kw['ip'] = kw.get('ip', options.address)
     args = ()
-    run(**kw)
+
 
 def main(options, args):
     print('Create service')
