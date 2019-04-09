@@ -1,13 +1,14 @@
 
 from multiprocessing import Process
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
-
+import connect
 
 
 class MyServerProtocol(WebSocketServerProtocol):
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
+        connect.connection_manager(request)
 
     def onOpen(self):
         print("WebSocket connection open.")
