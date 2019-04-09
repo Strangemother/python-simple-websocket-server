@@ -1,13 +1,15 @@
 import unittest
-import auto_server
-
+from functools import partial
 from multiprocessing import Process, Lock, Manager, Queue
-import client
 
+import client
+import auto_server
 import time
+
 
 port = 8004
 ip = '127.0.0.1'
+
 
 client_actions = {}
 
@@ -20,22 +22,42 @@ class DemoTestServerProtocol(auto_server.MyServerProtocol):
         super().__init__(*a, **kw)
 
     def onConnect(self, request):
-        self.lock_write('onConnect', True)
+        """Store the message back to the dictionary manager com"""
+        self.store('onConnect', True)
 
-    def lock_write(self, name, value):
+    def store(self, name, value):
         self.dback[name] = value
 
     def onOpen(self):
-        self.lock_write('onOpen', True)
+        """Store the message back to the dictionary manager com"""
+        self.store('onOpen', True)
 
-from functools import partial
+    def onMessage(self, payload, isBinary):
+        """Store the message back to the dictionary manager com"""
+        self.store('onMessage', (payload, isBinary, ))
 
-def run_server(cond):
+
+def run_server_process(cond):
+    """Run the standard server class, providing "DemoTestServerProtocol"
+    as the procotol to run - wrapped in a partial() to ensure the firt
+    argument is the _test_ write-back dict.
+    """
     pproc = partial(DemoTestServerProtocol, cond)
     auto_server.run(port, ip, protocol=pproc)
 
+def run_test_server():
+    """Run a server within a new process, sharing a dictionary through
+    a multiprocess manager
+    """
+    manager = Manager()
+    cond = manager.dict()
+    proc = Process(target=run_server_process, args=(cond,))
+    proc.start()
+    return manager, cond, proc
 
-def run_client():
+def run_bounce_client():
+    """Open a client a send a single "Apples" message and close.
+    """
     c = client.get_client(ip,port)
     print(c.status)
     v = c.send('Apples')
@@ -45,21 +67,19 @@ def run_client():
 class TestServer(unittest.TestCase):
 
     def setUp(self):
-        self.manager = Manager()
-        self.cond = self.manager.dict()
-        proc = Process(target=run_server, args=(self.cond,))
-        proc.start()
+        manager, cond, proc = run_test_server()
         self.server = proc
+        self.cond = cond
 
     def tearDown(self):
         self.server.terminate()
 
     def test_run(self):
-        print('Test Run')
-        run_client()
-        print('RES', self.cond)
-
-        #proc = Process(target=run_client)
-        #proc.start()
-
-
+        """Ensure the server can turn-on and receive a message"""
+        run_bounce_client()
+        # print('RES', self.cond)
+        expected = {'onConnect': True,
+            'onOpen': True,
+            'onMessage': (b'Apples', False)}
+        message = "Process Manager captured basic communication"
+        self.assertDictEqual(dict(self.cond), expected, message)
