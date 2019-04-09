@@ -1,11 +1,7 @@
 
-from autobahn.asyncio.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
-
 from multiprocessing import Process
+from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
 
-def f(name):
-    print('hello', name)
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -57,26 +53,29 @@ class MyServerProtocol(WebSocketServerProtocol):
 
 import asyncio
 
-async def keyboard_interrupt_watch():
+@asyncio.coroutine
+def keyboard_interrupt_watch():
     # Loop slowly in the background pumping the asyc queue. Upon keyboard error
     # this will error earlier than a silent websocket message queue.
     while True:
-        await asyncio.sleep(1)
+        yield from asyncio.sleep(1)
         # print("First Worker Executed")
 
 
-async def secondWorker():
+@asyncio.coroutine
+def secondWorker():
     while True:
-        await asyncio.sleep(1)
+        yield from asyncio.sleep(1)
         print("Second Worker Executed")
 
 
 def run(port=9000, ip='0.0.0.0', keyboard_watch=True, **kw):
     port = port or 9000
     ip = ip or '0.0.0.0'
-
-    factory = WebSocketServerFactory(u"ws://{}:{}".format(ip, port))
-    factory.protocol = MyServerProtocol
+    uri = u"ws://{}:{}".format(ip, port)
+    print('factory', uri)
+    factory = WebSocketServerFactory(uri)
+    factory.protocol = kw.get('protocol', MyServerProtocol)
 
     loop = asyncio.get_event_loop()
     coro_gen = loop.create_server(factory, ip, port)

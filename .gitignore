@@ -103,3 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 env3/ 
+env37 
+src3/env37 
