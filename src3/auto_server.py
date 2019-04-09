@@ -94,7 +94,7 @@ def run(port=9000, ip='0.0.0.0', keyboard_watch=True, **kw):
         # CTRL+C works on the next message loop.
         # This is delayed if no messages are given.
     except KeyboardInterrupt as e:
-        print('KeyboardInterrupt')
+        print('Server::KeyboardInterrupt')
     finally:
         connect.stop()
         server.close()

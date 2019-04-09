@@ -1,19 +1,20 @@
 from multiprocessing import Process, Pipe
 
-pipe = None
-process = None
 
-def f(conn):
-    conn.send([42, None, 'hello'])
+def message_handler(pipe):
+    pipe.send([42, None, 'hello'])
     while True:
         try:
-            msg = conn.recv()
+            msg = pipe.recv()
             if msg == 'close':
                 break
         except (EOFError, KeyboardInterrupt):
             break
-    conn.close()
+    pipe.close()
 
+
+pipe = None
+process = None
 
 def start():
     global pipe
@@ -21,7 +22,7 @@ def start():
 
     parent_conn, child_conn = Pipe()
     pipe = parent_conn
-    process = Process(target=f, args=(child_conn,))
+    process = Process(target=message_handler, args=(child_conn,))
     process.start()
 
 
