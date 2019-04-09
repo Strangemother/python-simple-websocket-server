@@ -12,7 +12,9 @@ ip = '127.0.0.1'
 client_actions = {}
 
 class DemoTestServerProtocol(auto_server.MyServerProtocol):
-
+    """A DemoTest runs a protocol to manage the shared
+    resource object the original testing unit will read.
+    """
     def __init__(self, dback, *a, **kw):
         self.dback = dback
         super().__init__(*a, **kw)
@@ -22,7 +24,6 @@ class DemoTestServerProtocol(auto_server.MyServerProtocol):
 
     def lock_write(self, name, value):
         self.dback[name] = value
-        print(name, value)
 
     def onOpen(self):
         self.lock_write('onOpen', True)
@@ -44,7 +45,6 @@ def run_client():
 class TestServer(unittest.TestCase):
 
     def setUp(self):
-        self.lock = Lock()
         self.manager = Manager()
         self.cond = self.manager.dict()
         proc = Process(target=run_server, args=(self.cond,))
@@ -57,10 +57,7 @@ class TestServer(unittest.TestCase):
     def test_run(self):
         print('Test Run')
         run_client()
-        time.sleep(1)
-        self.lock.acquire()
         print('RES', self.cond)
-        self.lock.release()
 
         #proc = Process(target=run_client)
         #proc.start()
