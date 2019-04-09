@@ -83,7 +83,7 @@ def run(port=9000, ip='0.0.0.0', keyboard_watch=True, **kw):
 
     print('Run', ip, port)
     server = loop.run_until_complete(coro_gen)
-
+    connect.start()
     if keyboard_watch:
         print('CTRL+C watch')
         asyncio.ensure_future(keyboard_interrupt_watch())
@@ -91,12 +91,12 @@ def run(port=9000, ip='0.0.0.0', keyboard_watch=True, **kw):
     try:
         print('Step into run run_forever')
         loop.run_forever()
-
         # CTRL+C works on the next message loop.
         # This is delayed if no messages are given.
     except KeyboardInterrupt as e:
         print('KeyboardInterrupt')
     finally:
+        connect.stop()
         server.close()
         print('Final close')
         loop.close()
