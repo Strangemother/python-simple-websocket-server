@@ -24,8 +24,7 @@ parsed = parser.parse_args()
 from auto_server import run
 
 def process_run(options=None, *args, **kw):
-    kw['port'] = kw.get('port', options.port)
-    kw['ip'] = kw.get('ip', options.ip)
+    kw.update(vars(options))
     args = ()
     run(**kw)
 

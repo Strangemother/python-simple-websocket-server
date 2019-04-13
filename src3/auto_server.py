@@ -1,58 +1,11 @@
-
-from multiprocessing import Process
-from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
-import connect
-
-
-class MyServerProtocol(WebSocketServerProtocol):
-
-    def onConnect(self, request):
-        print("Client connecting: {0}".format(request.peer))
-        connect.connection_manager(request)
-
-    def onOpen(self):
-        print("WebSocket connection open.")
-
-    def onMessage(self, payload, isBinary):
-        if isBinary:
-            print("Binary message received: {0} bytes".format(len(payload)))
-        else:
-            print("Text message received: {0}".format(payload.decode('utf8')))
-
-        # echo back message verbatim
-        self.sendMessage(payload, isBinary)
-
-    def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: {0}".format(reason))
-
-
-    # def sendHtml(self, html):
-    #     """
-    #     Send HTML page HTTP response.
-    #     """
-    #     responseBody = html.encode('utf8')
-    #     response = "HTTP/1.1 200 OK\x0d\x0a"
-    #     if self.factory.server is not None and self.factory.server != "":
-    #         response += "Server: %s\x0d\x0a" % self.factory.server
-    #     response += "Content-Type: text/html; charset=UTF-8\x0d\x0a"
-    #     response += "Content-Length: %d\x0d\x0a" % len(responseBody)
-    #     response += "\x0d\x0a"
-    #     self.sendData(response.encode('utf8'))
-    #     self.sendData(responseBody)
-
-
-    def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
-        """
-        Used to send out server status/version upon receiving a HTTP/GET without
-        upgrade to WebSocket header (and option serverStatus is True).
-        """
-        if redirectUrl:
-            redirect = """<meta http-equiv="refresh" content="%d;URL='%s'">""" % (redirectAfter, redirectUrl)
-        else:
-            redirect = ""
-        self.sendHtml("Woops! %s" % (redirect))
-
 import asyncio
+from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from multiprocessing import Process
+
+import connect
+from protocol import MyServerProtocol
+from factory import BroadcastServerFactory
+import config
 
 @asyncio.coroutine
 def keyboard_interrupt_watch():
@@ -63,27 +16,71 @@ def keyboard_interrupt_watch():
         # print("First Worker Executed")
 
 
-@asyncio.coroutine
-def secondWorker():
-    while True:
-        yield from asyncio.sleep(1)
-        print("Second Worker Executed")
+# @asyncio.coroutine
+# def secondWorker():
+#     while True:
+#         yield from asyncio.sleep(1)
+#         print("Second Worker Executed")
+
+def find_address(conf, ip, port):
+    """Extract the ip address and port for the server from the given config
+    or arguments. The config takes precedence
+    """
+    if 'websocket' in conf:
+        print('conf has websocket sub')
+        conf = conf.get('websocket')
+        port = conf.get('port', port) or 9000
+        ip = conf.get('address', ip) or '0.0.0.0'
+        return ip, port
+    port = port or conf.get('port', 9000)
+    ip = ip or conf.get('address', '0.0.0.0')
+    return ip, port
 
 
-def run(port=9000, ip='0.0.0.0', keyboard_watch=True, **kw):
-    port = port or 9000
-    ip = ip or '0.0.0.0'
+
+def run(port=None, ip=None, keyboard_watch=True, **kw):
+    """Run the server, using the given ip,port or extracting from the config.
+    if the ip,port are given - and found within the config, the config arguments
+    are chosen.
+    """
+    cpath = kw.get('config', None)
+    conf = get_config(cpath)
+    ip, port = find_address(conf, ip, port)
     uri = u"ws://{}:{}".format(ip, port)
+
     print('factory', uri)
-    factory = WebSocketServerFactory(uri)
+    factory = kw.get('factory', BroadcastServerFactory(uri))
     factory.protocol = kw.get('protocol', MyServerProtocol)
+    start_loop(factory, ip, port, keyboard_watch)
+
+
+def get_config(path=None):
+    """"
+    Load the given filepath expecting a config yaml. If the given path is None,
+    return an empty dict.
+    """
+    conf = {}
+    if path is None:
+        print('No config path defined')
+        return conf
+    print('loading config', path)
+    ok, conf = config.load(path)
+    if ok is False:
+        print('config load issue:', conf)
+        conf = {}
+
+    return conf
+
+
+def start_loop(factory, ip, port, keyboard_watch=True):
+    print('Run', ip, port)
 
     loop = asyncio.get_event_loop()
     coro_gen = loop.create_server(factory, ip, port)
-
-    print('Run', ip, port)
     server = loop.run_until_complete(coro_gen)
+
     connect.start()
+
     if keyboard_watch:
         print('CTRL+C watch')
         asyncio.ensure_future(keyboard_interrupt_watch())
