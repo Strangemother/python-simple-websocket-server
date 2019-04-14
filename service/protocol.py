@@ -218,7 +218,13 @@ class ServerProtocolReporter(WebSocketServerProtocol):
         return super()._onPong(*a, **kw)
 
 
-class MyServerProtocol(ServerProtocolReporter):
+class SendMixin(object):
+
+    def send_text(self, text):
+        return self.sendMessage(bytes(text, encoding='utf8'))
+
+
+class MyServerProtocol(ServerProtocolReporter, SendMixin):
 
     def connection_made(self, transport):
         self.uuid = id(self)
@@ -234,7 +240,7 @@ class MyServerProtocol(ServerProtocolReporter):
         log("Client connecting: {0}".format(request.peer), connect)
         # Send to connection manager for session.SessionManager
         # start or pickup
-        ok, space = connect.connection_manager(self.uuid, request)
+        ok, space = connect.connection_manager(self.uuid, request, self)
         if ok is False:
             # break
             log('Bad client')

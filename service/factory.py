@@ -27,7 +27,6 @@ class BroadcastServerFactory(WebSocketServerFactory):
         self.tickcount = 0
         self.tick()
 
-
     def tick(self):
         self.tickcount += 1
         self.broadcast("tick %d from server" % self.tickcount)

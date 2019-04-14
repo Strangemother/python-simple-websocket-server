@@ -102,11 +102,13 @@ class SessionManager(Handler):
         log('Recv client', uuid, client_space)
         s = f'Yey. Client passed basic props. Please welcome - {a}:{b}'
         log(s)
-        self.to_main_thread(s)
+        self.to_main_thread(uuid, s)
         # Begin modules as per client authing.
 
-    def to_main_thread(self, content):
-        return self.my_pipes[0].send(content)
+    def to_main_thread(self, *a):
+        if len(a) == 1:
+            a = a[0]
+        return self.my_pipes[0].send(a)
 
     def start(self, uuid, request):
         """Start a new session, receiving a UUID from the main

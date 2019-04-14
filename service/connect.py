@@ -38,12 +38,12 @@ def start():
     log('... Waiting for first response pipes')
     proc_pipes = pipe.recv()   # prints "[42, None, 'hello']"
     log('Recieved. Creating asyncio pipe_monitor')
-    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes))
+    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes, lock))
     log('.Done. continue start.')
 
 
 @asyncio.coroutine
-def pipe_monitor(sender_pipe, proc_pipes):
+def pipe_monitor(sender_pipe, proc_pipes, lock):
     """Bridge the connection between the sesssion handler within the Process
     (message_handler) and this process.
 
@@ -63,7 +63,7 @@ def pipe_monitor(sender_pipe, proc_pipes):
             if p1.poll():
                 msg = p1.recv()
                 #yield from asyncio.wait_for(p1.recv(), 1)
-                result = recv_session_message(msg)
+                result = recv_session_message(msg, lock)
                 if result is not None:
                     sender_pipe.send(result)
             else:
@@ -77,12 +77,22 @@ def pipe_monitor(sender_pipe, proc_pipes):
     log("death of pipe monitor")
 
 
-def recv_session_message(msg):
+def recv_session_message(msg, lock):
     """Receive a message from the session manager pipe.
     Return a value to send back to the session manager.
     """
     log('connect start while loop received a message from message_handler')
     log(msg)
+    if len(msg) <= 1:
+        log('Badly formatted session manager response:', msg)
+        return
+    uuid, *args = msg
+    # lock.acquire()
+    cache = MEM.get(uuid)
+    ret = f'recv_session_message: {args}'
+    #ret.encode('utf8')
+    cache['protocol'].sendMessage(bytes(ret, encoding='utf8'))
+    # lock.release()
     return None
 
 
@@ -118,7 +128,7 @@ def pipe_send(*a, _pipe=None):
     (_pipe or pipe).send(*a)
 
 
-def connection_manager(uuid, request):
+def connection_manager(uuid, request, protocol):
     """Accept a new request from a unique ID from the protocol.
     Send a remote signal followed by a get_client.
     Return a tuple of success, client dict.
@@ -142,8 +152,11 @@ def connection_manager(uuid, request):
         cache['cache_load'] = True
 
     cache['entry_client'] = client
+    cache['protocol'] = protocol
+
+    log(f'!! connection_manager Cache connection: {uuid}')
     pipe_send("client", uuid, client)
-    MEM[uuid] = client
+    MEM[uuid] = cache
     return True, client
 
 
