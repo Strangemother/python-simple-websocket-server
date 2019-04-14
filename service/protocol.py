@@ -1,6 +1,9 @@
 from autobahn.asyncio.websocket import WebSocketServerProtocol
-from wlog import plog as log
+from wlog import color_plog
 import connect
+
+log = color_plog('red')
+
 """
     'CLOSE_STATUS_CODES_ALLOWED', 'CLOSE_STATUS_CODE_ABNORMAL_CLOSE',
     'CLOSE_STATUS_CODE_GOING_AWAY', 'CLOSE_STATUS_CODE_INTERNAL_ERROR',
@@ -235,6 +238,7 @@ class MyServerProtocol(ServerProtocolReporter):
             # break
             log('Bad client')
         #self.sendMessage('Authenicating')
+
         headers = {}
         internal_header = 'custom_pre_auth_header'
         external_header = 'ExternalHeaderName'

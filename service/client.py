@@ -1,5 +1,5 @@
 from wlog import plog as log
-# from websocket import create_connection
+from websocket import create_connection
 
 
 USERNAMES = {
@@ -56,7 +56,6 @@ def get_client(uuid, request):
     api_key = request.headers.get('api_key', None)
     # Remove the first, and replace all / with -
     path = '-'.join(request.path.split('/')[1:])
-    request_username = request.headers.get('username')
     # build name
     username = get_username(path, api_key)
     # return config specific to key

@@ -27,6 +27,7 @@ from auto_server import run
 
 def process_run(options=None, *args, **kw):
     kw.update(vars(options))
+    kw['name'] = 'Cheese'
     args = ()
     run(**kw)
 

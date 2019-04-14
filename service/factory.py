@@ -8,12 +8,24 @@ class BroadcastServerFactory(WebSocketServerFactory):
     Simple broadcast server broadcasting any message it receives to all
     currently connected clients.
     """
+    server_version = 'Facor'
 
-    def __init__(self, url):
-        super().__init__(url)
+    @property
+    def server(self):
+        return "Strangemother/BroadcastServerFactory::{}/0.01".format(self._server_name)
+
+    @server.setter
+    def server(self, name):
+        self._server_name = name
+
+
+    def __init__(self, url, **kw):
+        super().__init__(url, **kw)
         self.clients = []
+        self._server_name = 'Unnamed.'
         self.tickcount = 0
         self.tick()
+
 
     def tick(self):
         self.tickcount += 1

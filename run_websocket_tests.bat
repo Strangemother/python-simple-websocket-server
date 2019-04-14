@@ -1,1 +1,1 @@
-cd websocket && pytest tests/ -sv && cd ..
+cd service && pytest tests/ -sv && cd ..

@@ -67,7 +67,7 @@ def run_test_server():
 def run_bounce_client():
     """Open a client a send a single "Apples" message and close.
     """
-    c = client.get_client(ip, port)
+    c = client.connect(ip, port)
     print(c.status)
     v = c.send('Apples')
     c.close()
@@ -83,6 +83,7 @@ class TestServer(unittest.TestCase):
 
     def tearDown(self):
         self.server.terminate()
+
 
     def test_find_websocket_address(self):
         conf = dict(websocket=dict(address=1, port=2))
@@ -100,8 +101,6 @@ class TestServer(unittest.TestCase):
         ip, port = auto_server.find_address({}, None, None)
         assert ip == '0.0.0.0'
         assert port == 9000
-
-
 
     def test_run(self):
         """Ensure the server can turn-on and receive a message"""

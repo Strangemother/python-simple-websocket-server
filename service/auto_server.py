@@ -50,7 +50,9 @@ def run(port=None, ip=None, keyboard_watch=True, **kw):
     uri = u"ws://{}:{}".format(ip, port)
 
     log('factory', uri)
-    factory = kw.get('factory', BroadcastServerFactory(uri))
+
+    server_kwargs =dict(server=kw.get('name', 'No Name'))
+    factory = kw.get('factory', BroadcastServerFactory(uri, **server_kwargs))
     factory.protocol = kw.get('protocol', MyServerProtocol)
     start_loop(factory, ip, port, keyboard_watch)
 
@@ -77,6 +79,9 @@ def start_loop(factory, ip, port, keyboard_watch=True):
     log('Run', ip, port)
 
     loop = asyncio.get_event_loop()
+    #https://docs.python.org/3/library/asyncio-eventloop.html#creating-network-servers
+    # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Server
+    # https://docs.python.org/3/library/asyncio-protocol.html#asyncio-protocol
     coro_gen = loop.create_server(factory, ip, port)
     server = loop.run_until_complete(coro_gen)
 

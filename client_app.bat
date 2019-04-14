@@ -1,1 +1,1 @@
-cd ./html && ..\websocket\env37\Scripts\python -m http.server
+cd ./html && ..\service\env37\Scripts\python -m http.server

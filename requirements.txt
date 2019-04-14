@@ -2,6 +2,8 @@ Django
 onetimepass
 autobahn
 nose
+pytest
+nose-cov
 websocket-client
 pyqrcode
-pyyaml 
+pyyaml
