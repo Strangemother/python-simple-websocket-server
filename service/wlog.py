@@ -47,4 +47,12 @@ from functools import partial
 
 
 def color_plog(color):
-    return partial(plog, color=color)
+    ref = partial(plog, color=color)
+    setattr(ref, 'announce', partial(announce, ref))
+    return ref
+
+def announce(_log, name, file):
+    import pdb; pdb.set_trace()  # breakpoint 58f716d2 //
+    color = _log.keywords.get('color', '')
+    _log(f"!announce {color}: {name} {file}")
+

@@ -3,6 +3,7 @@ from autobahn.asyncio.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory
 from wlog import color_plog
 log = color_plog('cyan')
+log.announce(__name__, __file__)
 
 class MyClientProtocol(WebSocketClientProtocol):
 

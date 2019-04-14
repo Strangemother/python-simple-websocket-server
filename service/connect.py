@@ -6,6 +6,7 @@ from wlog import color_plog
 
 
 log = color_plog('cyan')
+log(__name__, __file__)
 
 pipe = None
 process = None
@@ -51,14 +52,6 @@ def message_handler(pipe, lock):
     pipe.close()
 
 
-def stop():
-    try:
-        pipe.send('close')
-    except BrokenPipeError:
-        log('connect::pipe is already closed')
-    process.join()
-
-
 def connection_manager(uuid, request):
     """Accept a new request from a unique ID
     """
@@ -82,3 +75,10 @@ def connection_manager(uuid, request):
     cache['entry_client'] = client
     pipe.send(("client", uuid, client,))
     return True, client
+
+def stop():
+    try:
+        pipe.send('close')
+    except BrokenPipeError:
+        log('connect::pipe is already closed')
+    process.join()

@@ -8,6 +8,7 @@ from factory import BroadcastServerFactory
 import config
 from wlog import color_plog
 log = color_plog('white')
+log(__name__, __file__)
 
 @asyncio.coroutine
 def keyboard_interrupt_watch():

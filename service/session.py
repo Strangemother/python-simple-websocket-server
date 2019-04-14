@@ -7,6 +7,7 @@ from datetime import datetime
 import error
 from wlog import color_plog
 log = color_plog('magenta')
+log(__name__, __file__)
 
 SESSIONS = {
 }
