@@ -5,8 +5,7 @@ from client import get_client
 from wlog import color_plog
 
 
-log = color_plog('cyan')
-log.announce(__spec__)
+log = color_plog('cyan').announce(__spec__)
 
 pipe = None
 process = None

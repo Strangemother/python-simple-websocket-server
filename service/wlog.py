@@ -69,4 +69,4 @@ def announce(_log, spec):
     Spaces['NAME_MIN_WIDTH'] = max(Spaces['NAME_MIN_WIDTH'], len(name)+2)
     Spaces['COLOR_MIN_WIDTH'] = max(Spaces['COLOR_MIN_WIDTH'], len(name)+2)
     _log(f"!{color:<{Spaces['COLOR_MIN_WIDTH']}} {name:<{Spaces['NAME_MIN_WIDTH']}} {file}")
-
+    return _log
