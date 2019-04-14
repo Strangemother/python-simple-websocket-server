@@ -226,6 +226,8 @@ class MyServerProtocol(ServerProtocolReporter):
     def onConnect(self, request):
         """Send a post of the request to the connect.connection_manager
         Return 'auth' headers for pelimary acceptance.
+
+        A user is given an initial "space" - of which may not be authenticated.
         """
         log("Client connecting: {0}".format(request.peer), connect)
         ok, space = connect.connection_manager(self.uuid, request)

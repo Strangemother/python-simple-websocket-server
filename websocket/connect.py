@@ -2,8 +2,12 @@ from multiprocessing import Process, Pipe, Lock
 
 from wlog import plog as log
 
+DUP_CLIENT = 'dup_client', "Duplicate Client or client already exists in session"
+CLIENT_FAILURE = 'client_failure', "A client failure given through the remote pipe"
+
 
 def message_handler(pipe, lock):
+
     log('-- Starting connect handler\n')
     handler = Handler(pipe, lock)
     pipe.send(handler.init_response())
@@ -72,9 +76,6 @@ class Handler(object):
 
         return self.start(uuid, request)
 
-    def start(self, uuid, request):
-        log('new user', uuid)
-
     def pickup(self, uuid, request):
         """A Session reinitiated from a pipe 'init'.
         continue the session or perform a refuse
@@ -82,12 +83,43 @@ class Handler(object):
         session = SESSIONS.get(uuid)
         log('pickup session', uuid)
 
+    def msg_client_failure(self, uuid, reason):
+        """A client_failure message
+        """
+        self.fail_client(uuid, CLIENT_FAILURE, reason=reason)
+
+    def start(self, uuid, request):
+        """Start a new session, receiving a UUID from the main
+        websocket client.
+        """
+        now = datetime.now()
+        session = dict(uuid=uuid, request=request, start_time=now)
+        # Begin modules as per client authing.
+        log('new user', uuid, '- wait for client', session['start_time'])
+
     def msg_client(self, uuid, client):
-        pass
+        session = SESSIONS.get(uuid)
+        if 'client' in session:
+            log('Wooh. This client should not exist.')
+            return self.fail_client(uuid, DUP_CLIENT,
+                                    client=client, session=session)
+
+        log('Recv client', uuid, client)
+
+
+
+    def fail_client(self, uuid, error_id, **kw):
+        """Capture a client failure with the given uuid and error constant
+        givden.
+        """
+        log('CLIENT FAIL', uuid, error_id, kw)
+
 
     def kill():
-        pass
+        log('kill')
 
+
+from datetime import datetime
 
 def start():
     """Called by an external process to initial the internal machinery of pipe
@@ -122,12 +154,16 @@ def connection_manager(uuid, request):
     ok, client = get_client(uuid, request)
 
     if ok is False:
+        print("Client failure", uuid)
+        pipe.send(("client_failure", uuid, vars(client),))
         return False, client
 
     cache = MEM.get(uuid, None)
     if cache is None:
         log('New uuid', uuid)
         cache = {}
+    else:
+        cache['cache_load'] = True
 
     cache['entry_client'] = client
     pipe.send(("client", uuid, client,))
@@ -137,7 +173,7 @@ def connection_manager(uuid, request):
 def get_client(uuid, request):
     """Return a tuple of success and client data
 
-    request:  '_is_public', 'extensions', 'headers', 'host', 'origin',
+        request:  '_is_public', 'extensions', 'headers', 'host', 'origin',
                 'params', 'path', 'peer', 'protocols', 'version'
         path:           '/'
         peer:           'tcp:192.168.1.104:54454'
@@ -168,10 +204,10 @@ def get_client(uuid, request):
     # build name
     username = get_username(path, api_key)
     # return config specific to key
-    space = get_user_space(username, api_key)
-    if space is None:
+    ok, space = get_user_space(username, api_key)
+    if ok is False:
         log('-- space failure\n')
-        space = Struct({ 'fail': True })
+        space['fail'] = True
         return False, space
     space.uuid = uuid
 
@@ -204,10 +240,14 @@ def get_user_space(username, api_key):
     """
     client = CLIENTS.get(username)
     if client is None:
-        return
+        log('Username does not exist:', username)
+        return False, Struct({
+                "reason": f"username does not exist {username}",
+                "username": username
+            })
     space = client[api_key]
     res = Struct(space)
-    return res
+    return True, res
 
 
 class Struct(object):
@@ -217,3 +257,7 @@ class Struct(object):
 
     def __init__(self, o):
         self.__dict__.update(o)
+
+    def __setitem__(self, k, v):
+        self.__dict__[k] = v
+
