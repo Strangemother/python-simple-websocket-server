@@ -67,6 +67,6 @@ def announce(_log, spec):
     color = "%s:" % _log.keywords.get('color', '').upper()
     Spaces[file] = color
     Spaces['NAME_MIN_WIDTH'] = max(Spaces['NAME_MIN_WIDTH'], len(name)+2)
-    Spaces['COLOR_MIN_WIDTH'] = max(Spaces['COLOR_MIN_WIDTH'], len(name)+2)
+    Spaces['COLOR_MIN_WIDTH'] = max(Spaces['COLOR_MIN_WIDTH'], len(color)+1)
     _log(f"!{color:<{Spaces['COLOR_MIN_WIDTH']}} {name:<{Spaces['NAME_MIN_WIDTH']}} {file}")
     return _log

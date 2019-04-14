@@ -2,8 +2,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol
 import connect
 
 from wlog import color_plog
-log = color_plog('blue')
-log.announce(__spec__)
+log = color_plog('blue').announce(__spec__)
 
 """
     'CLOSE_STATUS_CODES_ALLOWED', 'CLOSE_STATUS_CODE_ABNORMAL_CLOSE',
@@ -156,7 +155,6 @@ class ServerProtocolReporter(WebSocketServerProtocol):
 
     def _consume(self, *a, **kw):
         log('_consume', a, kw)
-
         return super()._consume(*a, **kw)
 
     def _dataReceived(self, *a, **kw):
@@ -234,19 +232,23 @@ class MyServerProtocol(ServerProtocolReporter):
         A user is given an initial "space" - of which may not be authenticated.
         """
         log("Client connecting: {0}".format(request.peer), connect)
+        # Send to connection manager for session.SessionManager
+        # start or pickup
         ok, space = connect.connection_manager(self.uuid, request)
         if ok is False:
             # break
             log('Bad client')
         #self.sendMessage('Authenicating')
+        headers = self.get_headers(request)
+        return (None, headers)
 
+    def get_headers(self, request):
         headers = {}
         internal_header = 'custom_pre_auth_header'
         external_header = 'ExternalHeaderName'
         if internal_header in request.headers:
             headers[external_header] = request.headers[internal_header]
-
-        return (None, headers)
+        return headers
 
     def broadcast_message(self, payload, isBinary):
         if not isBinary:

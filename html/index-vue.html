@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" />
+
+<title>WebSocket Test</title>
+
+<div id="main">
+    <div class="apiKey">
+        <textarea ref='apiKey' name="apiKey" cols="50" v-model='apiKey'></textarea>
+    </div>
+    <div class="url">
+        <textarea ref='url' name="url" cols="50" v-model='url'></textarea>
+
+        <input type="button"
+            name='connectButton'
+            value="Connect"
+            v-if="connected == false"
+            @click="connect">
+
+        <input type="button"
+            name='closeButton'
+            value="Close"
+            v-if="connected"
+            @click="close">
+
+    </div>
+
+    <div class="message-container">
+        <ul class="messages">
+            <li class="message" v-for='item in messages'>{{ item }}</li>
+        </ul>
+    </div>
+    <div class="input-container">
+        <textarea name="inputtext" v-model='message' cols="50"></textarea>
+    </div>
+    <div class="actions">
+        <input type="button"
+            name='sendButton'
+            value="Send"
+            v-if="connected"
+            @click="send">
+    </div>
+</div>
+
+
+<form name="myform">
+
+    <p>
+        <textarea name="inputtext" cols="50"></textarea>
+    </p>
+    <p>
+        <textarea name="url" cols="50"></textarea>
+    </p>
+    <p>
+        <input type="button" name=sendButton value="Send" onClick="sendText();">
+        <input type="button" name=clearButton value="Clear" onClick="clearText();">
+        <input type="button" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
+        <input type="button" name=connectButton value="Connect" onClick="doConnect();">
+    </p>
+</form>
+
+
+<script language="javascript" type="text/javascript" src='static/js/vue.js'></script>
+<script language="javascript" type="text/javascript" src='static/js/index.js'></script>
+
+</html>
+

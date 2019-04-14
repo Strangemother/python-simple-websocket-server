@@ -1,8 +1,7 @@
 from websocket import create_connection
 
 from wlog import color_plog
-log = color_plog('red')
-log.announce(__spec__)
+log = color_plog('red').announce(__spec__)
 
 USERNAMES = {
     'api_key_1': ('test1', '/')
@@ -11,11 +10,11 @@ USERNAMES = {
 
 # Persistend records...
 CLIENTS = {
-    'test': {
+    'test1': {
         'api_key_1': dict(
                 origins=('https://', 'https://', 'file://', 'ws://'),
-                entries=('/', '/0ASD9F0AIF_my_special_app_key',),
-                hosts=('192.168.1.104', 'localhost', '*'),
+                entries=('', '0ASD9F0AIF_my_special_app_key',),
+                hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
             )
     }
 }
@@ -56,22 +55,33 @@ def get_client(uuid, request):
 
     # sign up public owner key.
     api_key = request.headers.get('api_key', None)
+    if api_key is None:
+        # HEaders not available; use params
+        api_key = request.params.get('api_key', None)
+        if api_key is not None:
+            api_key = api_key[0]
+        else:
+            log('get_client api_key failure')
+
     # Remove the first, and replace all / with -
+
     path = '-'.join(request.path.split('/')[1:])
     # build name
     username = get_username(path, api_key)
     # return config specific to key
     ok, space = get_user_space(username, api_key)
+
     if ok is False:
         log('-- space failure\n')
         space['fail'] = ok
         return ok, space
+
     space.uuid = uuid
 
-    # Check path, origin, peer,
+    # Check the basic path, origin, peer - this should move...
     assert path in space.entries
     assert request.host in space.hosts
-    assert origin in space.origins
+    assert request.origin in space.origins
 
     return ok, space
 
@@ -86,9 +96,9 @@ def get_username(path, api_key):
         return
 
     username, allowed_path = udata
-    if allowed_path == path:
+    if allowed_path[1:] == path:
         return username
-    log('Will not return username, given path does not match allowed path')
+    log(f'Will not return username, given path "{path}" does not match allowed path "{allowed_path}"')
 
 
 def get_user_space(username, api_key):
@@ -103,6 +113,7 @@ def get_user_space(username, api_key):
                 "username": username
             })
     space = client[api_key]
+    space['entry_username'] = username
     res = Struct(space)
     return True, res
 
