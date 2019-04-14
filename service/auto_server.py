@@ -6,7 +6,8 @@ import connect
 from protocol import MyServerProtocol
 from factory import BroadcastServerFactory
 import config
-from wlog import plog as log
+from wlog import color_plog
+log = color_plog('white')
 
 @asyncio.coroutine
 def keyboard_interrupt_watch():

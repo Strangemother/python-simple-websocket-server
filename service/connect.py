@@ -1,9 +1,11 @@
 from multiprocessing import Process, Pipe, Lock
 
-from wlog import plog as log
 from session import Handler
 from client import get_client
+from wlog import color_plog
 
+
+log = color_plog('cyan')
 
 pipe = None
 process = None

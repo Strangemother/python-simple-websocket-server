@@ -5,8 +5,8 @@ socket session happening elsewhere.
 
 from datetime import datetime
 import error
-from wlog import plog as log
-
+from wlog import color_plog
+log = color_plog('magenta')
 
 SESSIONS = {
 }

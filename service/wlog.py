@@ -20,7 +20,9 @@ class Colors:
     white = Fore.WHITE
     reset = Fore.RESET
 
+
 logging.basicConfig(level=logging.DEBUG)
+
 
 def log(*a, prefix='', color=None):
     if color is None:
@@ -36,6 +38,7 @@ def log(*a, prefix='', color=None):
         logging.sys.stdout.write(Style.RESET_ALL)
 
 warn = logging.warn
+
 
 def plog(*a, prefix='  -- ', **kw):
     return log(*a, prefix=prefix, **kw)

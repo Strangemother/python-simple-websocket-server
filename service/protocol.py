@@ -1,8 +1,8 @@
 from autobahn.asyncio.websocket import WebSocketServerProtocol
-from wlog import color_plog
 import connect
 
-log = color_plog('red')
+from wlog import color_plog
+log = color_plog('yellow')
 
 """
     'CLOSE_STATUS_CODES_ALLOWED', 'CLOSE_STATUS_CODE_ABNORMAL_CLOSE',
