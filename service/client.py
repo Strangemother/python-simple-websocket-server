@@ -2,8 +2,7 @@ from websocket import create_connection
 
 from wlog import color_plog
 log = color_plog('red')
-log(__name__, __file__)
-log.announce(__name__, __file__)
+log.announce(__spec__)
 
 USERNAMES = {
     'api_key_1': ('test1', '/')

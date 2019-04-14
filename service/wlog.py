@@ -51,8 +51,22 @@ def color_plog(color):
     setattr(ref, 'announce', partial(announce, ref))
     return ref
 
-def announce(_log, name, file):
-    import pdb; pdb.set_trace()  # breakpoint 58f716d2 //
-    color = _log.keywords.get('color', '')
-    _log(f"!announce {color}: {name} {file}")
+
+Spaces = {
+    'NAME_MIN_WIDTH': 8,
+    'COLOR_MIN_WIDTH': 8,
+}
+
+def announce(_log, spec):
+    # log.announce(__spec__)
+    name = spec.name
+    file = spec.origin
+    if file in Spaces:
+        _log('.. skipping re-announce of', name)
+        return
+    color = "%s:" % _log.keywords.get('color', '').upper()
+    Spaces[file] = color
+    Spaces['NAME_MIN_WIDTH'] = max(Spaces['NAME_MIN_WIDTH'], len(name)+2)
+    Spaces['COLOR_MIN_WIDTH'] = max(Spaces['COLOR_MIN_WIDTH'], len(name)+2)
+    _log(f"!{color:<{Spaces['COLOR_MIN_WIDTH']}} {name:<{Spaces['NAME_MIN_WIDTH']}} {file}")
 

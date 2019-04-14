@@ -6,7 +6,7 @@ from wlog import color_plog
 
 
 log = color_plog('cyan')
-log(__name__, __file__)
+log.announce(__spec__)
 
 pipe = None
 process = None
