@@ -1,15 +1,19 @@
 from multiprocessing import Process, Pipe, Lock
 
+from wlog import plog as log
+
 
 def message_handler(pipe, lock):
-    pipe.send([42, None, 'hello'])
+    log('-- Starting connect handler\n')
+    handler = Handler(pipe, lock)
+    pipe.send(handler.init_response())
     while True:
         try:
             msg = pipe.recv()
             if msg == 'close':
                 break
-
-
+                handler.kill()
+            handler.recv(msg)
         except (EOFError, KeyboardInterrupt):
             break
     pipe.close()
@@ -38,6 +42,53 @@ CLIENTS = {
 }
 
 
+"""
+The handler manages pipe msgs for background handling of a siling
+socket session happening elsewhere.
+"""
+SESSIONS = {
+}
+
+class Handler(object):
+
+    def __init__(self, pipe, lock):
+        self.pipe = pipe
+        self.lock = lock
+
+    def init_response(self):
+        return [42, True, 'Howdy']
+
+    def recv(self, msg):
+        name, uuid, *args = msg
+        method = f"msg_{name}"
+        log('Handler:', uuid, method)
+        if hasattr(self, method):
+            result = getattr(self, method)(uuid, *args)
+
+    def msg_init(self, uuid, request):
+
+        if uuid in SESSIONS:
+            return self.pickup(uuid, request)
+
+        return self.start(uuid, request)
+
+    def start(self, uuid, request):
+        log('new user', uuid)
+
+    def pickup(self, uuid, request):
+        """A Session reinitiated from a pipe 'init'.
+        continue the session or perform a refuse
+        """
+        session = SESSIONS.get(uuid)
+        log('pickup session', uuid)
+
+    def msg_client(self, uuid, client):
+        pass
+
+    def kill():
+        pass
+
+
 def start():
     """Called by an external process to initial the internal machinery of pipe
     communication and thread.
@@ -51,14 +102,14 @@ def start():
     lock = Lock()
     process = Process(target=message_handler, args=(child_conn, lock))
     process.start()
-    print(pipe.recv())   # prints "[42, None, 'hello']"
+    log(pipe.recv())   # prints "[42, None, 'hello']"
 
 
 def stop():
     try:
         pipe.send('close')
     except BrokenPipeError:
-        print('connect::pipe is already closed')
+        log('connect::pipe is already closed')
     process.join()
 
 
@@ -66,7 +117,7 @@ def connection_manager(uuid, request):
     """Accept a new request from a unique ID
     """
     # Send off....
-    pipe.send((uuid, request,))
+    pipe.send(("init", uuid, request,))
     # get_client
     ok, client = get_client(uuid, request)
 
@@ -75,10 +126,11 @@ def connection_manager(uuid, request):
 
     cache = MEM.get(uuid, None)
     if cache is None:
-        print('New uuid', uuid)
+        log('New uuid', uuid)
         cache = {}
 
     cache['entry_client'] = client
+    pipe.send(("client", uuid, client,))
     return True, client
 
 
@@ -118,7 +170,7 @@ def get_client(uuid, request):
     # return config specific to key
     space = get_user_space(username, api_key)
     if space is None:
-        print('\nspace failure\n')
+        log('-- space failure\n')
         space = Struct({ 'fail': True })
         return False, space
     space.uuid = uuid
@@ -137,13 +189,13 @@ def get_username(path, api_key):
     """
     udata = USERNAMES.get(api_key, None)
     if udata is None:
-        print('bad api_key')
+        log('bad api_key')
         return
 
     username, allowed_path = udata
     if allowed_path == path:
         return username
-    print('Will not return username, given path does not match allowed path')
+    log('Will not return username, given path does not match allowed path')
 
 
 def get_user_space(username, api_key):

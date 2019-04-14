@@ -1,1 +1,1 @@
-cd src3 && pytest tests/ -sv && cd ..
+cd websocket && pytest tests/ -sv && cd ..

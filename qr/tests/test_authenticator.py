@@ -11,7 +11,7 @@ class TestAuthenticator(unittest.TestCase):
         name = 'foo'
         secret = 'random_string'
         res = au.gen_auth_string(name, secret)
-        template = f"otpauth://totp/{name}?secret={secret}"
+        template = "otpauth://totp/{}?secret={}".format(name, secret)
         assert res == template
 
     @mock.patch('authenticator.gen_16', return_value='egg')
@@ -19,7 +19,7 @@ class TestAuthenticator(unittest.TestCase):
         """gen_auth_string must return a correctly formatted string with no args"""
         res = au.gen_auth_string(None, None)
 
-        template = f"otpauth://totp/authenticator?secret=egg"
+        template = "otpauth://totp/authenticator?secret=egg"
         assert res == template, f"Failure for {res}"
 
     @mock.patch('authenticator.otp.get_totp', return_value='egg')

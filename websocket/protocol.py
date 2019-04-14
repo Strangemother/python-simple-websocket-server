@@ -1,4 +1,5 @@
 from autobahn.asyncio.websocket import WebSocketServerProtocol
+from wlog import plog as log
 import connect
 """
     'CLOSE_STATUS_CODES_ALLOWED', 'CLOSE_STATUS_CODE_ABNORMAL_CLOSE',
@@ -138,80 +139,80 @@ class ServerProtocolReporter(WebSocketServerProtocol):
     request and farm to the worker tools.
     """
     def _closeConnection(self, *a, **kw):
-        print('_closeConnection', a, kw)
+        log('_closeConnection', a, kw)
         return super()._closeConnection(*a, **kw)
 
     def _connectionLost(self, *a, **kw):
-        print('_connectionLost', a, kw)
+        log('_connectionLost', a, kw)
         return super()._connectionLost(*a, **kw)
 
     def _connectionMade(self, *a, **kw):
-        print('_connectionMade', a, kw)
+        log('_connectionMade', a, kw)
         return super()._connectionMade(*a, **kw)
 
     def _consume(self, *a, **kw):
-        print('_consume', a, kw)
+        log('_consume', a, kw)
 
         return super()._consume(*a, **kw)
 
     def _dataReceived(self, *a, **kw):
-        print('_dataReceived', a, kw)
+        log('_dataReceived', a, kw)
         return super()._dataReceived(*a, **kw)
 
     def _fail_connection(self, *a, **kw):
-        print('_fail_connection', a, kw)
+        log('_fail_connection', a, kw)
         return super()._fail_connection(*a, **kw)
 
     def _invalid_payload(self, *a, **kw):
-        print('_invalid_payload', a, kw)
+        log('_invalid_payload', a, kw)
         return super()._invalid_payload(*a, **kw)
 
     def _is_public(self, *a, **kw):
-        print('_is_public', a, kw)
+        log('_is_public', a, kw)
         return super()._is_public(*a, **kw)
 
     def _onClose(self, *a, **kw):
-        print('_onClose', a, kw)
+        log('_onClose', a, kw)
         return super()._onClose(*a, **kw)
 
     def _onMessage(self, *a, **kw):
-        print('_onMessage', a, kw)
+        log('_onMessage', a, kw)
         return super()._onMessage(*a, **kw)
 
     def _onMessageBegin(self, *a, **kw):
-        print('_onMessageBegin', a, kw)
+        log('_onMessageBegin', a, kw)
         return super()._onMessageBegin(*a, **kw)
 
     def _onMessageEnd(self, *a, **kw):
-        print('_onMessageEnd', a, kw)
+        log('_onMessageEnd', a, kw)
         return super()._onMessageEnd(*a, **kw)
 
     def _onMessageFrame(self, *a, **kw):
-        print('_onMessageFrame', a, kw)
+        log('_onMessageFrame', a, kw)
         return super()._onMessageFrame(*a, **kw)
 
     def _onMessageFrameBegin(self, *a, **kw):
-        print('_onMessageFrameBegin', a, kw)
+        log('_onMessageFrameBegin', a, kw)
         return super()._onMessageFrameBegin(*a, **kw)
 
     def _onMessageFrameData(self, *a, **kw):
-        print('_onMessageFrameData', a, kw)
+        log('_onMessageFrameData', a, kw)
         return super()._onMessageFrameData(*a, **kw)
 
     def _onMessageFrameEnd(self, *a, **kw):
-        print('_onMessageFrameEnd', a, kw)
+        log('_onMessageFrameEnd', a, kw)
         return super()._onMessageFrameEnd(*a, **kw)
 
     def _onOpen(self, *a, **kw):
-        print('_onOpen', a, kw)
+        log('_onOpen', a, kw)
         return super()._onOpen(*a, **kw)
 
     def _onPing(self, *a, **kw):
-        print('_onPing', a, kw)
+        log('_onPing', a, kw)
         return super()._onPing(*a, **kw)
 
     def _onPong(self, *a, **kw):
-        print('_onPong', a, kw)
+        log('_onPong', a, kw)
         return super()._onPong(*a, **kw)
 
 
@@ -219,18 +220,18 @@ class MyServerProtocol(ServerProtocolReporter):
 
     def connection_made(self, transport):
         self.uuid = id(self)
-        print('Connection', self.uuid)
+        log('Connection', self.uuid)
         super().connection_made(transport)
 
     def onConnect(self, request):
         """Send a post of the request to the connect.connection_manager
         Return 'auth' headers for pelimary acceptance.
         """
-        print("Client connecting: {0}".format(request.peer), connect)
+        log("Client connecting: {0}".format(request.peer), connect)
         ok, space = connect.connection_manager(self.uuid, request)
         if ok is False:
             # break
-            print('Bad client')
+            log('Bad client')
         #self.sendMessage('Authenicating')
         headers = {}
         internal_header = 'custom_pre_auth_header'
@@ -254,20 +255,20 @@ class MyServerProtocol(ServerProtocolReporter):
     def onOpen(self):
         """Register socket client with the factory client list"""
         self.factory.register(self)
-        print("WebSocket connection open.")
+        log("WebSocket connection open.")
         # Wait for confirmation
 
     def onMessage(self, payload, isBinary):
         if isBinary:
-            print("Binary message received: {0} bytes".format(len(payload)))
+            log("Binary message received: {0} bytes".format(len(payload)))
         else:
-            print("Text message received: {0}".format(payload.decode('utf8')))
+            log("Text message received: {0}".format(payload.decode('utf8')))
 
         # echo back message verbatim
         self.sendMessage(payload, isBinary)
 
     def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: {0}".format(reason))
+        log("WebSocket connection closed: {0}".format(reason))
 
     # def sendHtml(self, html):
     #     """

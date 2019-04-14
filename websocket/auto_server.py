@@ -6,6 +6,7 @@ import connect
 from protocol import MyServerProtocol
 from factory import BroadcastServerFactory
 import config
+from wlog import plog as log
 
 @asyncio.coroutine
 def keyboard_interrupt_watch():
@@ -13,21 +14,21 @@ def keyboard_interrupt_watch():
     # this will error earlier than a silent websocket message queue.
     while True:
         yield from asyncio.sleep(1)
-        # print("First Worker Executed")
+        # log("First Worker Executed")
 
 
 # @asyncio.coroutine
 # def secondWorker():
 #     while True:
 #         yield from asyncio.sleep(1)
-#         print("Second Worker Executed")
+#         log("Second Worker Executed")
 
 def find_address(conf, ip, port):
     """Extract the ip address and port for the server from the given config
     or arguments. The config takes precedence
     """
     if 'websocket' in conf:
-        print('conf has websocket sub')
+        log('conf has websocket sub')
         conf = conf.get('websocket')
         port = conf.get('port', port) or 9000
         ip = conf.get('address', ip) or '0.0.0.0'
@@ -48,7 +49,7 @@ def run(port=None, ip=None, keyboard_watch=True, **kw):
     ip, port = find_address(conf, ip, port)
     uri = u"ws://{}:{}".format(ip, port)
 
-    print('factory', uri)
+    log('factory', uri)
     factory = kw.get('factory', BroadcastServerFactory(uri))
     factory.protocol = kw.get('protocol', MyServerProtocol)
     start_loop(factory, ip, port, keyboard_watch)
@@ -61,19 +62,19 @@ def get_config(path=None):
     """
     conf = {}
     if path is None:
-        print('No config path defined')
+        log('No config path defined')
         return conf
-    print('loading config', path)
+    log('loading config', path)
     ok, conf = config.load(path)
     if ok is False:
-        print('config load issue:', conf)
+        log('config load issue:', conf)
         conf = {}
 
     return conf
 
 
 def start_loop(factory, ip, port, keyboard_watch=True):
-    print('Run', ip, port)
+    log('Run', ip, port)
 
     loop = asyncio.get_event_loop()
     coro_gen = loop.create_server(factory, ip, port)
@@ -82,20 +83,20 @@ def start_loop(factory, ip, port, keyboard_watch=True):
     connect.start()
 
     if keyboard_watch:
-        print('CTRL+C watch')
+        log('CTRL+C watch')
         asyncio.ensure_future(keyboard_interrupt_watch())
 
     try:
-        print('Step into run run_forever')
+        log('Step into run run_forever')
         loop.run_forever()
         # CTRL+C works on the next message loop.
         # This is delayed if no messages are given.
     except KeyboardInterrupt as e:
-        print('Server::KeyboardInterrupt')
+        log('Server::KeyboardInterrupt')
     finally:
         connect.stop()
         server.close()
-        print('Final close')
+        log('Final close')
         loop.close()
 
 if __name__ == '__main__':

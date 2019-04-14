@@ -2,6 +2,8 @@
 """
 This is a sample for qpython webapp
 """
+from wlog import plog as log
+
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-f", "--file", dest="filename",
@@ -29,7 +31,7 @@ def process_run(options=None, *args, **kw):
     run(**kw)
 
 def main(options, args):
-    print('Create service')
+    log('Create service')
     global pr
     pr = process_run(options)
 
