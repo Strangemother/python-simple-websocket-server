@@ -264,11 +264,13 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
     def connectionLost(self, reason):
         """unregister this socket from the factory client list.
         """
-        self.factory.unregister(self)
+        ok, space = connect.close_manager(self.uuid, (reason,), self)
+        self.factory.close(self, reason=reason)
         super().connectionLost(reason)
 
     def onOpen(self):
         """Register socket client with the factory client list"""
+        ok, space = connect.open_manager(self.uuid, self)
         self.factory.register(self)
         log("WebSocket connection open.")
         # Wait for confirmation
@@ -284,7 +286,9 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
 
     def onClose(self, wasClean, code, reason):
         log("WebSocket connection closed: {0}".format(reason))
-
+        err = wasClean, code, reason
+        ok, space = connect.shutdown_manager(self.uuid, err, self)
+        self.factory.close(self, wasClean=wasClean, code=code, reason=reason)
     # def sendHtml(self, html):
     #     """
     #     Send HTML page HTTP response.

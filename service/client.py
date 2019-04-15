@@ -129,3 +129,6 @@ class Struct(object):
     def __setitem__(self, k, v):
         self.__dict__[k] = v
 
+    def repr(self):
+        keys = dir(self)
+        return f"<client.Struct {keys}>"

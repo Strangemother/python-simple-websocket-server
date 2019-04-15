@@ -38,12 +38,13 @@ def start():
     log('... Waiting for first response pipes')
     proc_pipes = pipe.recv()   # prints "[42, None, 'hello']"
     log('Recieved. Creating asyncio pipe_monitor')
-    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes, lock))
+
+    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes))
     log('.Done. continue start.')
 
 
 @asyncio.coroutine
-def pipe_monitor(sender_pipe, proc_pipes, lock):
+def pipe_monitor(sender_pipe, proc_pipes):
     """Bridge the connection between the sesssion handler within the Process
     (message_handler) and this process.
 
@@ -58,16 +59,13 @@ def pipe_monitor(sender_pipe, proc_pipes, lock):
     # this will error earlier than a silent websocket message queue.
     log('Monitoring session pipe')
     p1 = proc_pipes[1]
+
     while True:
         try:
             if p1.poll():
-                msg = p1.recv()
-                #yield from asyncio.wait_for(p1.recv(), 1)
-                result = recv_session_message(msg, lock)
-                if result is not None:
-                    sender_pipe.send(result)
-            else:
-                yield from asyncio.sleep(.1)
+                read_pipe(p1)
+                continue
+            yield from asyncio.sleep(.1)
         except (asyncio.TimeoutError):
             log('Pass.')
         except (KeyboardInterrupt, EOFError) as e:
@@ -77,22 +75,32 @@ def pipe_monitor(sender_pipe, proc_pipes, lock):
     log("death of pipe monitor")
 
 
-def recv_session_message(msg, lock):
+def read_pipe(p1):
+    """Called by the pipe_monitor, read the given pipe expecting a recv().
+    """
+    msg = p1.recv()
+    #yield from asyncio.wait_for(p1.recv(), 1)
+    result = recv_session_message(msg)
+    if result is not None:
+        sender_pipe.send(result)
+
+
+def recv_session_message(msg):
     """Receive a message from the session manager pipe.
     Return a value to send back to the session manager.
     """
-    log('connect start while loop received a message from message_handler')
-    log(msg)
     if len(msg) <= 1:
         log('Badly formatted session manager response:', msg)
         return
     uuid, *args = msg
+
+    log('connect start while loop received a message from message_handler')
+    log(msg)
+    # Locking is not required with a async loop.
     # lock.acquire()
     cache = MEM.get(uuid)
     ret = f'recv_session_message: {args}'
-    #ret.encode('utf8')
-    cache['protocol'].sendMessage(bytes(ret, encoding='utf8'))
-    # lock.release()
+    cache['protocol'].send_text(ret)
     return None
 
 
@@ -114,7 +122,9 @@ def message_handler(pipe, lock):
                 handler.kill()
             handler.recv(msg)
         except (EOFError, KeyboardInterrupt):
+            log('Closing message_handler')
             break
+    handler.kill()
     pipe.close()
 
 
@@ -158,6 +168,24 @@ def connection_manager(uuid, request, protocol):
     pipe_send("client", uuid, client)
     MEM[uuid] = cache
     return True, client
+
+
+def close_manager(uuid, error, protocol):
+    pipe_send("close", uuid, error)
+    cache = MEM.get(uuid, None)
+    # change this to a Mark and sweep.
+    del MEM[uuid]
+    # close...
+    log(f'!! close_manager deleted connection: {uuid}:"{error}"')
+    return True, cache
+
+
+def open_manager(uuid, protocol):
+    pipe_send("open", uuid)
+    cache = MEM.get(uuid, None)
+
+    log(f'!! open_manager assert connection: {uuid}')
+    return True, cache
 
 
 def stop():

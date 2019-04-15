@@ -48,3 +48,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
             c.sendMessage(msg.encode('utf8'))
             log("message sent to {}".format(c.peer))
 
+    def close(self, client, **kw):
+        log('close client', client)
+        self.unregister(client)
+

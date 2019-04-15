@@ -54,8 +54,10 @@ class Handler(object):
         if hasattr(self, method):
             result = getattr(self, method)(uuid, *args)
 
-    def kill():
-        log('kill')
+    def kill(self):
+        log(f'kill {__name__}')
+        self.my_pipes[0].close()
+        self.my_pipes[1].close()
 
 
 class SessionManager(Handler):
@@ -86,9 +88,6 @@ class SessionManager(Handler):
         session = SESSIONS.get(uuid)
         if session is None:
             log('Client without a session?')
-        b = client_space.entry_username
-        a = client_space.uuid
-
 
         if 'client' in session:
             log('Wooh. This client should not exist.')
@@ -100,6 +99,8 @@ class SessionManager(Handler):
         session['auth'] = AUTH.INIT
         # client.CLIENT
         log('Recv client', uuid, client_space)
+        b = client_space.entry_username
+        a = client_space.uuid
         s = f'Yey. Client passed basic props. Please welcome - {a}:{b}'
         log(s)
         self.to_main_thread(uuid, s)
@@ -120,7 +121,6 @@ class SessionManager(Handler):
         # Ensure websocket session is ready - load channel specific modules
         session['auth'] = AUTH.ZERO
         SESSIONS[uuid] = session
-
 
     def pickup(self, uuid, request):
         """A Session reinitiated from a pipe 'init'.
