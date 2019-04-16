@@ -191,6 +191,19 @@ def open_manager(uuid, protocol):
     return True, cache
 
 
+def message_manager(uuid, payload, isBinary):
+    """
+    Send the message to the manager. Return any next-step the protcol
+    should action - such as 'drop connection'
+    """
+    pipe_send("message", uuid, payload, isBinary)
+    action = {}
+
+    log(f'!! message_manager message: {uuid}')
+    # back to protocol.
+    return True, action
+
+
 def stop():
     try:
         pipe_send('close')

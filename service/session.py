@@ -23,10 +23,12 @@ class AUTH:
     # All good users should have an INIT state - allowing an open connection.
     INIT = 1
 
+
 SESSIONS = {}
 
 # A Cache of python discovered routines
 ROUTINES = {}
+
 
 class Handler(object):
 
@@ -114,6 +116,23 @@ class SessionManager(Handler):
 
         self.welcome(session, client_space)
 
+    def get_session(self, uuid):
+        return SESSIONS.get(uuid)
+
+    def msg_message(self, uuid, payload, isBinary):
+        """Receive a socket message from the procotol through the
+        connect.message_manager. Pass the message the an existing routine.
+        """
+        self.log(f'Received message: len({len(payload)}), Binary: {isBinary}')
+
+
+    def msg_open(self, uuid):
+        """An 'open' client has successfully authenticated the first stage
+        as a good socket. The start() or pickup() method should have been
+        called by an 'init' (msg_init(uuid, request)) message.
+        """
+        self.log(f'Received open: {uuid}')
+
     def welcome(self, session, client_space):
         # set the client at auth 1 - the socket is welcome. Next onboard
         # based upon 'space' settings
@@ -146,13 +165,14 @@ class SessionManager(Handler):
         # ll('run_routine', session, client_space)
 
         current = self.get_current_routine(name, session, client_space)
-        # assert step
+        current.recv_session(session, session[name])
+        session['routine'] = current
         # move pointer or wait for incoming.
         # Close and wait (sleep) for next step action.
 
     def get_current_routine(self, name, session, client_space):
         """Return the _current_ step the user should exist within, either new
-        or existing. The given routine instance should manage the succes of the
+        or existing. The given routine instance should manage the success of the
         step to allow transition to the next step.
         """
         routines = self.get_routines(name, client_space)
@@ -169,7 +189,8 @@ class SessionManager(Handler):
         # Provide with the existing session content for the module
         # to utilise as required.
         self.log('Generating current routine instance...')
-        instance = _Routine(self, session, client_space, session_stash)
+        # contrib.connect.site.Authed
+        instance = _Routine(self, client_space)
 
         return instance
 

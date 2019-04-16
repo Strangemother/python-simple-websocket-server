@@ -1,3 +1,6 @@
+"""Validate a session with a QR client response.
+"""
+
 from wlog import color_plog
 
 log = color_plog('yellow').announce(__spec__)
@@ -33,3 +36,8 @@ class Authed(object):
         self.session = session
         self.session_stash = session_stash
         self.log(f'Auth module index {session_stash["index"]}')
+
+    def recv_msg(self, data, binary=False):
+        """When _in-process_ the Auth instance captures messages directly from
+        the client socket.
+        """

@@ -280,7 +280,7 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
             log("Binary message received: {0} bytes".format(len(payload)))
         else:
             log("Text message received: {0}".format(payload.decode('utf8')))
-
+        ok, action = connect.message_manager(self.uuid, payload, isBinary)
         # echo back message verbatim
         self.sendMessage(payload, isBinary)
 
