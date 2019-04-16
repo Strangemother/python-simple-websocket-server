@@ -8,6 +8,7 @@
     <div class="apiKey">
         <textarea ref='apiKey' name="apiKey" cols="50" v-model='apiKey'></textarea>
     </div>
+    <div class="timer-container"><label>Time (ms)<input type="text" v-model='time'></label></div>
     <div class="url">
         <textarea ref='url' name="url" cols="50" v-model='url'></textarea>
 
@@ -22,6 +23,10 @@
             value="Close"
             v-if="connected"
             @click="close">
+
+        <input type="button"
+            value="toggle spammer"
+            @click="toggleTicker">
 
     </div>
 
@@ -41,23 +46,6 @@
             @click="send">
     </div>
 </div>
-
-
-<form name="myform">
-
-    <p>
-        <textarea name="inputtext" cols="50"></textarea>
-    </p>
-    <p>
-        <textarea name="url" cols="50"></textarea>
-    </p>
-    <p>
-        <input type="button" name=sendButton value="Send" onClick="sendText();">
-        <input type="button" name=clearButton value="Clear" onClick="clearText();">
-        <input type="button" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
-        <input type="button" name=connectButton value="Connect" onClick="doConnect();">
-    </p>
-</form>
 
 
 <script language="javascript" type="text/javascript" src='static/js/vue.js'></script>
