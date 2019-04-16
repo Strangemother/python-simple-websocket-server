@@ -287,7 +287,7 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
     def onClose(self, wasClean, code, reason):
         log("WebSocket connection closed: {0}".format(reason))
         err = wasClean, code, reason
-        ok, space = connect.shutdown_manager(self.uuid, err, self)
+        ok, space = connect.close_manager(self.uuid, err, self)
         self.factory.close(self, wasClean=wasClean, code=code, reason=reason)
     # def sendHtml(self, html):
     #     """

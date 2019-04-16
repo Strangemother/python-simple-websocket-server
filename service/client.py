@@ -12,9 +12,18 @@ USERNAMES = {
 CLIENTS = {
     'test1': {
         'api_key_1': dict(
+                # Flag for more output and freedom
+                debug=True,
+                # Accessible openers
                 origins=('https://', 'https://', 'file://', 'ws://'),
+                # API key URL or param key
                 entries=('', '0ASD9F0AIF_my_special_app_key',),
+                # Allowed incoming host
                 hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
+                # modules for authenticating the onConnect; AUTH 0.
+                connect=(
+                        'contrib.connect.site.Authed',
+                    )
             )
     }
 }
@@ -129,6 +138,9 @@ class Struct(object):
     def __setitem__(self, k, v):
         self.__dict__[k] = v
 
-    def repr(self):
+    def __getitem__(self, k):
+        return self.__dict__[k]
+
+    def __repr__(self):
         keys = dir(self)
         return f"<client.Struct {keys}>"

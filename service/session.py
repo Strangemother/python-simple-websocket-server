@@ -2,12 +2,16 @@
 The handler manages pipe msgs for background handling of a sibling
 socket session happening elsewhere.
 """
-
 from multiprocessing import Process, Pipe, Lock
 from datetime import datetime
+from pydoc import locate
 import error
+
 from wlog import color_plog
+
+
 log = color_plog('magenta').announce(__spec__)
+
 
 class AUTH:
     # All 'start' requests initially recieve a ZERO, denoting no auth has -
@@ -19,9 +23,10 @@ class AUTH:
     # All good users should have an INIT state - allowing an open connection.
     INIT = 1
 
-SESSIONS = {
-}
+SESSIONS = {}
 
+# A Cache of python discovered routines
+ROUTINES = {}
 
 class Handler(object):
 
@@ -94,17 +99,47 @@ class SessionManager(Handler):
             return self.fail_client(uuid, error.DUP_CLIENT,
                                     client=client_space, session=session)
 
+        self.welcome(session, client_space)
+
+    def welcome(self, session, client_space):
         # set the client at auth 1 - the socket is welcome. Next onboard
         # based upon 'space' settings
         session['auth'] = AUTH.INIT
         # client.CLIENT
+        uuid = client_space.uuid
         log('Recv client', uuid, client_space)
         b = client_space.entry_username
-        a = client_space.uuid
-        s = f'Yey. Client passed basic props. Please welcome - {a}:{b}'
+        s = f'Yey. Client passed basic props. Please welcome - {uuid}:{b}'
         log(s)
         self.to_main_thread(uuid, s)
+
         # Begin modules as per client authing.
+        session['connect'] = { 'index': 0 }
+        ROUTINES[uuid] = {}
+        self.run_routine("connect", session, client_space)
+
+    def run_routine(self, name, session, client_space):
+        """Run the procedural steps for the client defined by the given name.
+        Acting as middleware the session should perform all required steps
+        before the routine is complete.
+        """
+        def ll(*a):
+            if client_space.debug:
+                self.to_main_thread(client_space.uuid, *a)
+            log(*a)
+
+        ll('run_routine', session, client_space)
+        # resolve classes
+        locs = client_space[name]
+        items = ()
+
+        for loc in locs:
+            ll('locating', loc)
+            items += (locate(loc), )
+
+        ll(f'Recording new items to ROUTINES[{client_space.uuid}][{name}]')
+        ROUTINES[client_space.uuid][name] = items
+        ll("Found:", items)
 
     def to_main_thread(self, *a):
         if len(a) == 1:
