@@ -33,6 +33,7 @@ class Handler(object):
     def __init__(self, pipe, lock):
         self.pipe = pipe
         self.lock = lock
+        self.log = log
 
 
     def init_response(self):
@@ -71,6 +72,18 @@ class SessionManager(Handler):
     arguments. Designed to communicate through pipes within its own process -
     the session_manager is not within the same thread as the connect.* or
     websocket client.
+
+    Content seen within:
+
+        uuid: The unique ID of the connecting socket. Unique for every connection
+              Currently this is a id() hash of the socket client entity - but
+              this may change in the future
+        session: The active user session created for the client socket. It's
+                 considered fresh and voliatile.
+        client_space: the API key content specifying the owners requests for the
+                      socket intent. This is a persistent record from the database
+                      and should not be used to store content.
+
     """
 
     def msg_init(self, uuid, request):
@@ -123,23 +136,65 @@ class SessionManager(Handler):
         Acting as middleware the session should perform all required steps
         before the routine is complete.
         """
+
         def ll(*a):
             if client_space.debug:
                 self.to_main_thread(client_space.uuid, *a)
             log(*a)
 
-        ll('run_routine', session, client_space)
+        self.log = ll
+        # ll('run_routine', session, client_space)
+
+        current = self.get_current_routine(name, session, client_space)
+        # assert step
+        # move pointer or wait for incoming.
+        # Close and wait (sleep) for next step action.
+
+    def get_current_routine(self, name, session, client_space):
+        """Return the _current_ step the user should exist within, either new
+        or existing. The given routine instance should manage the succes of the
+        step to allow transition to the next step.
+        """
+        routines = self.get_routines(name, client_space)
+        ## Get alive or new routine.
+
+        # save point
+        session_stash = session[name]
+        # current position
+        index = session_stash['index']
+        # Generate expected instance; or find from working session
+        _Routine = routines[index]
+        ## populate with existing data
+
+        # Provide with the existing session content for the module
+        # to utilise as required.
+        self.log('Generating current routine instance...')
+        instance = _Routine(self, session, client_space, session_stash)
+
+        return instance
+
+    def get_routines(self, name, client_space):
+        """Given a list of string dotted notations, resolve the pointer
+        objects classes or functions and return a tuple.
+        If the routines for the client already exist (previously resolved),
+        return the cache value.
+        """
+        locations = client_space[name]
+        cache_val = ROUTINES.get(client_space.uuid).get(name, None)
+        if cache_val is not None:
+            return cache_val
+
         # resolve classes
-        locs = client_space[name]
         items = ()
 
-        for loc in locs:
-            ll('locating', loc)
+        for loc in locations:
+            self.log('locating', loc)
             items += (locate(loc), )
 
-        ll(f'Recording new items to ROUTINES[{client_space.uuid}][{name}]')
+        self.log(f'Recording new items to ROUTINES[{client_space.uuid}][{name}]')
         ROUTINES[client_space.uuid][name] = items
-        ll("Found:", items)
+        self.log("Found:", items)
+        return items
 
     def to_main_thread(self, *a):
         if len(a) == 1:
@@ -169,3 +224,16 @@ class SessionManager(Handler):
         givden.
         """
         log('CLIENT FAIL', uuid, error_id, kw)
+        session = SESSIONS.get(uuid, None)
+        if session is None:
+            return
+
+        log('Deleting session', uuid)
+        del SESSIONS[uuid]
+
+        routines = ROUTINES.get(uuid, None)
+        if routines is None:
+            return
+
+        log('Deleting routines', uuid)
+        del ROUTINES[uuid]
