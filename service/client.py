@@ -23,6 +23,7 @@ CLIENTS = {
                 # modules for authenticating the onConnect; AUTH 0.
                 connect=(
                         'contrib.connect.site.Authed',
+                        'contrib.connect.qr.Authed',
                     )
             )
     }

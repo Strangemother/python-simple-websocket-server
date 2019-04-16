@@ -30,11 +30,6 @@
 
     </div>
 
-    <div class="message-container">
-        <ul class="messages">
-            <li class="message" v-for='item in messages'>{{ item }}</li>
-        </ul>
-    </div>
     <div class="input-container">
         <textarea name="inputtext" v-model='message' cols="50"></textarea>
     </div>
@@ -44,6 +39,11 @@
             value="Send"
             v-if="connected"
             @click="send">
+    </div>
+    <div class="message-container">
+        <ul class="messages">
+            <li class="message" v-for='item in messages'>{{ item }}</li>
+        </ul>
     </div>
 </div>
 

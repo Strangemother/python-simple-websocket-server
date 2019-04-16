@@ -1,9 +1,7 @@
-from wlog import color_plog
-
-log = color_plog('yellow').announce(__spec__)
+from contrib.base import SessionCallable
 
 
-class Authed(object):
+class Authed(SessionCallable):
     """assert the socket user has authorized with the connected
     site.
 
@@ -12,24 +10,14 @@ class Authed(object):
               wait for an event from the socket for valid or invalid
     If true, tell the manager 'valid'.
     """
-    def __init__(self, manager, client_space):
-        """
-            Session: The users connected session information
-            client_space: the persistent definition created by the owner
-            session_stash: transient data kept in session outside this instance for
-                           cross request persistence.
-        """
-        self.manager = manager
-        self.client_space = client_space
-        def ll(*a):
-            if client_space.debug:
-                self.manager.to_main_thread(client_space.uuid, *a)
-            log(*a)
 
-        self.log = ll
-        self.log(f'Authed init::{client_space.uuid}')
+    def recv_msg(self, payload, binary=False):
+        """When _in-process_ the Auth instance captures messages directly from
+        the client socket.
+        """
+        res = payload == b'secret'
+        self.log(f'Auth module received message: {payload} == {res} Binary: {binary}')
 
-    def recv_session(self, session, session_stash):
-        self.session = session
-        self.session_stash = session_stash
-        self.log(f'Auth module index {session_stash["index"]}')
+        if res:
+            return self.assert_valid()
+        self.assert_fail()

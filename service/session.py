@@ -70,22 +70,21 @@ class Handler(object):
 
 class SessionManager(Handler):
     """
-    Handle messages given to recv(msg) to call the msg_ methods with the
-    arguments. Designed to communicate through pipes within its own process -
-    the session_manager is not within the same thread as the connect.* or
-    websocket client.
+        Handle messages given to recv(msg) to call the msg_ methods with the
+        arguments. Designed to communicate through pipes within its own process -
+        the session_manager is not within the same thread as the connect.* or
+        websocket client.
 
-    Content seen within:
+        Content seen within:
 
-        uuid: The unique ID of the connecting socket. Unique for every connection
-              Currently this is a id() hash of the socket client entity - but
-              this may change in the future
-        session: The active user session created for the client socket. It's
-                 considered fresh and voliatile.
-        client_space: the API key content specifying the owners requests for the
-                      socket intent. This is a persistent record from the database
-                      and should not be used to store content.
-
+            uuid: The unique ID of the connecting socket. Unique for every connection
+                  Currently this is a id() hash of the socket client entity - but
+                  this may change in the future
+            session: The active user session created for the client socket. It's
+                     considered fresh and voliatile.
+            client_space: the API key content specifying the owners requests for the
+                          socket intent. This is a persistent record from the database
+                          and should not be used to store content.
     """
 
     def msg_init(self, uuid, request):
@@ -124,14 +123,26 @@ class SessionManager(Handler):
         connect.message_manager. Pass the message the an existing routine.
         """
         self.log(f'Received message: len({len(payload)}), Binary: {isBinary}')
-
+        routine = self._get_open_routine(uuid)
+        routine.recv_msg(payload, isBinary)
 
     def msg_open(self, uuid):
         """An 'open' client has successfully authenticated the first stage
         as a good socket. The start() or pickup() method should have been
         called by an 'init' (msg_init(uuid, request)) message.
         """
-        self.log(f'Received open: {uuid}')
+        #self.log(f'Received open: {uuid}')
+        routine = self._get_open_routine(uuid)
+
+    def _get_open_routine(self, uuid):
+        session = self.get_session(uuid)
+        if session is not None:
+            current = session.get('routine')
+        if current is None:
+            self.log('No current routine? Did the user Auth correctly?')
+            return
+        return current
+        # continue
 
     def welcome(self, session, client_space):
         # set the client at auth 1 - the socket is welcome. Next onboard
@@ -258,3 +269,26 @@ class SessionManager(Handler):
 
         log('Deleting routines', uuid)
         del ROUTINES[uuid]
+
+    def present_valid(self, unit):
+        """Assert the given unit as valid, being asserted by the unit itself.
+        """
+        self.log('Manager')
+        session = unit.session
+        uuid  = unit.client_space.uuid
+        self_session = self.get_session(uuid)
+        if unit == self_session['routine']:
+            # The current routine has asserted  itself
+            self.log(f'routine validation of {uuid}')
+
+    def present_fail(self, unit):
+        """Assert the given unit as valid, being asserted by the unit itself.
+        """
+        self.log('Manager')
+        session = unit.session
+        uuid  = unit.client_space.uuid
+        self_session = self.get_session(uuid)
+        if unit == self_session['routine']:
+            # The current routine has asserted  itself
+            self.log(f'FAIL routine validation of {uuid}')
+

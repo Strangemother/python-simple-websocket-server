@@ -25,7 +25,7 @@ var app = new Vue({
         }
 
         , push(item) {
-            return this.messages.push(item)
+            return this.messages.unshift(item)
         }
 
         , newSocket(url) {
