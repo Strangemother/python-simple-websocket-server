@@ -174,6 +174,9 @@ def close_manager(uuid, error, protocol):
     pipe_send("close", uuid, error)
     cache = MEM.get(uuid, None)
     # change this to a Mark and sweep.
+    if cache is None:
+        return False, None
+
     del MEM[uuid]
     # close...
     log(f'!! close_manager deleted connection: {uuid}:"{error}"')
