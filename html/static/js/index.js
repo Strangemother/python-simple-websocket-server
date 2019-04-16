@@ -14,6 +14,7 @@ var app = new Vue({
         , apiKey: 'api_key_1'
         , connected: false
         , message: 'Hello World.'
+        , time: 1000
     }
 
     , methods: {
@@ -77,6 +78,26 @@ var app = new Vue({
         , onError(socket, ev) {
             console.error(socket, ev)
             this.push(`Error: ${ev}`)
+        }
+
+        , toggleTicker(){
+            T=0
+
+            if(this.timer){
+                clearInterval(this.timer)
+                delete this.timer
+                return
+            }
+
+            this.timer = setInterval(function(){
+                T++
+                if(app.connected){
+                    app.close()
+                }else {
+                    app.messages=[]
+                    app.connect()
+                }
+            }, this.time);
         }
     }
 
