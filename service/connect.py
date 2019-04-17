@@ -94,13 +94,17 @@ def recv_session_message(msg):
         return
     uuid, *args = msg
 
-    log('connect start while loop received a message from message_handler')
-    log(msg)
+    log('>')
+    #log(msg)
     # Locking is not required with a async loop.
     # lock.acquire()
     cache = MEM.get(uuid)
     ret = f'recv_session_message: {args}'
-    cache['protocol'].send_text(ret)
+    try:
+        cache['protocol'].send_text(ret)
+    except TypeError:
+        # dead protocol.
+        log(f'\n\n --- Failed message to {uuid}\n{ret}')
     return None
 
 

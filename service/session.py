@@ -29,6 +29,9 @@ SESSIONS = {}
 # A Cache of python discovered routines
 ROUTINES = {}
 
+RAISE = 'raise'
+CONTINUE = 'continue'
+
 
 class Handler(object):
 
@@ -136,6 +139,7 @@ class SessionManager(Handler):
 
     def _get_open_routine(self, uuid):
         session = self.get_session(uuid)
+        current = None
         if session is not None:
             current = session.get('routine')
         if current is None:
@@ -167,10 +171,10 @@ class SessionManager(Handler):
         before the routine is complete.
         """
 
-        def ll(*a):
+        def ll(*a, **kw):
             if client_space.debug:
                 self.to_main_thread(client_space.uuid, *a)
-            log(*a)
+            log(*a, **kw)
 
         self.log = ll
         # ll('run_routine', session, client_space)
@@ -200,12 +204,16 @@ class SessionManager(Handler):
         # Generate expected instance; or find from working session
         _Routine, init_session_stash = routines[index]
         ## populate with existing data
+        self.log('Generating new current routine instance...', index, _Routine)
 
+        if ('valid' in init_session_stash) is False:
+            self.log('Setting init_session_stash[valid] as False')
+            init_session_stash['valid'] = False
         # Provide with the existing session content for the module
         # to utilise as required.
-        self.log('Generating new current routine instance...', index, _Routine)
         # contrib.connect.site.Authed
         instance = _Routine(self, client_space, init_session_stash)
+        instance.created(index)
         self.log(instance.__module__, instance.__class__.__name__)
 
         return instance
@@ -229,13 +237,33 @@ class SessionManager(Handler):
             self.log('locating', loc)
             if isinstance(loc, (tuple, list,)):
                 loc, init_session_stash = loc
-            item = (locate(loc), init_session_stash,)
+            discovered = locate(loc)
+            if discovered is None:
+                action = self.assert_bad_pointer(loc, name, client_space)
+                err = f'Cannot resolve pointer: {name} "{loc}" for {client_space.uuid}'
+                if action == RAISE:
+                    raise Exception(err)
+                if action == CONTINUE:
+                    spacer = '\n\n{}\n\n'.format('-' * 40)
+                    self.log(f'\n{spacer}CONTINUE - Ignore issue:\n{err}{spacer}\n', color='red')
+                    continue
+
+            item = (discovered, init_session_stash,)
             items += (item, )
 
         self.log(f'Recording new items to ROUTINES[{client_space.uuid}][{name}]')
         ROUTINES[client_space.uuid][name] = items
         self.log("Found:", items)
         return items
+
+    def assert_bad_pointer(self, pointer, name, client_space):
+        """The given string pointer from the client_space did not resolve a
+        callable entity.
+        """
+        self.log(f'Bad session routine pointer {name} "{pointer}"')
+
+        return RAISE
+        #return CONTINUE
 
     def to_main_thread(self, *a):
         if len(a) == 1:
@@ -282,26 +310,52 @@ class SessionManager(Handler):
     def present_valid(self, unit):
         """Assert the given unit as valid, being asserted by the unit itself.
         """
-        self.log('Manager')
+        self.log('Manager present_valid')
         session = unit.session
         uuid  = unit.client_space.uuid
         self_session = self.get_session(uuid)
+        name = self_session['current']
+        unit.data['valid'] = True
+        self_session[name]['valid'] = True
+
         if unit == self_session['routine']:
             # The current routine has asserted  itself
             self.log(f'routine validation of {uuid}')
-            name = self_session['current']
-            session_stash = session[name]
-            self.log(f'routine validation of {uuid}', name, session_stash)
-            session_stash['index'] += 1
-            self.run_routine(name, session, unit.client_space)
+            self.step_session(name, session, unit.client_space, session['routine'])
+
+    def step_session(self, name, session, client_space, current=None):
+        """Perform a change to the next session unit index.
+        If the session subset is complete the session manager will
+        handle the loading of the next substep and validation.
+
+            name: the substep name e.g 'connect'
+            session: the active socket session tracking user data
+            client_space: API assignment from the owner persistent settings
+        """
+        uuid = client_space.uuid
+        if current is None:
+            # resolve client
+            self_session = self.get_session(uuid)
+            current = self_session['routine']
+        # IndexError: tuple index out of range
+
+        session_stash = session[name]
+        self.log(f'routine validation of {uuid}', name, session_stash)
+        session_stash['index'] += 1
+        current.close()
+        self.run_routine(name, session, client_space)
 
     def present_fail(self, unit):
         """Assert the given unit as valid, being asserted by the unit itself.
         """
-        self.log('Manager')
+        self.log('Manager present_fail')
         session = unit.session
         uuid  = unit.client_space.uuid
         self_session = self.get_session(uuid)
+        name = self_session['current']
+        session[name]['valid'] = False
+        self_session[name]['valid'] = False
+
         if unit == self_session['routine']:
             # The current routine has asserted  itself
             self.log(f'FAIL routine validation of {uuid}')

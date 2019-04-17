@@ -48,3 +48,19 @@ class SessionCallable(object):
 
         self.log('Fail')
         self.manager.present_fail(self)
+
+    def created(self, index):
+        """Called bt the session manager when a new instance of this class is
+        gnerated for tracking a users flow.
+        """
+        self.log(f'Created {self.__class__.__name__} at position {index}')
+
+    def close(self):
+        """Called by the session manager if the instance is alive and will be
+        killed.
+        """
+        if self.data['valid'] is True:
+            self.log("I'm closing well!")
+        else:
+            self.log("Closing whilst invalid")
+

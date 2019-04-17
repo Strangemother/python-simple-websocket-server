@@ -142,79 +142,79 @@ class ServerProtocolReporter(WebSocketServerProtocol):
     request and farm to the worker tools.
     """
     def _closeConnection(self, *a, **kw):
-        log('_closeConnection', a, kw)
+        #log('_closeConnection', a, kw)
         return super()._closeConnection(*a, **kw)
 
     def _connectionLost(self, *a, **kw):
-        log('_connectionLost', a, kw)
+        #log('_connectionLost', a, kw)
         return super()._connectionLost(*a, **kw)
 
     def _connectionMade(self, *a, **kw):
-        log('_connectionMade', a, kw)
+        #log('_connectionMade', a, kw)
         return super()._connectionMade(*a, **kw)
 
     def _consume(self, *a, **kw):
-        log('_consume', a, kw)
+        #log('_consume', a, kw)
         return super()._consume(*a, **kw)
 
     def _dataReceived(self, *a, **kw):
-        log('_dataReceived', a, kw)
+        #log('_dataReceived', a, kw)
         return super()._dataReceived(*a, **kw)
 
     def _fail_connection(self, *a, **kw):
-        log('_fail_connection', a, kw)
+        #log('_fail_connection', a, kw)
         return super()._fail_connection(*a, **kw)
 
     def _invalid_payload(self, *a, **kw):
-        log('_invalid_payload', a, kw)
+        #log('_invalid_payload', a, kw)
         return super()._invalid_payload(*a, **kw)
 
     def _is_public(self, *a, **kw):
-        log('_is_public', a, kw)
+        #log('_is_public', a, kw)
         return super()._is_public(*a, **kw)
 
     def _onClose(self, *a, **kw):
-        log('_onClose', a, kw)
+        #log('_onClose', a, kw)
         return super()._onClose(*a, **kw)
 
     def _onMessage(self, *a, **kw):
-        log('_onMessage', a, kw)
+        #log('_onMessage', a, kw)
         return super()._onMessage(*a, **kw)
 
     def _onMessageBegin(self, *a, **kw):
-        log('_onMessageBegin', a, kw)
+        #log('_onMessageBegin', a, kw)
         return super()._onMessageBegin(*a, **kw)
 
     def _onMessageEnd(self, *a, **kw):
-        log('_onMessageEnd', a, kw)
+        #log('_onMessageEnd', a, kw)
         return super()._onMessageEnd(*a, **kw)
 
     def _onMessageFrame(self, *a, **kw):
-        log('_onMessageFrame', a, kw)
+        #log('_onMessageFrame', a, kw)
         return super()._onMessageFrame(*a, **kw)
 
     def _onMessageFrameBegin(self, *a, **kw):
-        log('_onMessageFrameBegin', a, kw)
+        #log('_onMessageFrameBegin', a, kw)
         return super()._onMessageFrameBegin(*a, **kw)
 
     def _onMessageFrameData(self, *a, **kw):
-        log('_onMessageFrameData', a, kw)
+        #log('_onMessageFrameData', a, kw)
         return super()._onMessageFrameData(*a, **kw)
 
     def _onMessageFrameEnd(self, *a, **kw):
-        log('_onMessageFrameEnd', a, kw)
+        #log('_onMessageFrameEnd', a, kw)
         return super()._onMessageFrameEnd(*a, **kw)
 
     def _onOpen(self, *a, **kw):
-        log('_onOpen', a, kw)
+        #log('_onOpen', a, kw)
         return super()._onOpen(*a, **kw)
 
     def _onPing(self, *a, **kw):
-        log('_onPing', a, kw)
+        #log('_onPing', a, kw)
         return super()._onPing(*a, **kw)
 
     def _onPong(self, *a, **kw):
-        log('_onPong', a, kw)
+        #log('_onPong', a, kw)
         return super()._onPong(*a, **kw)
 
 

@@ -14,3 +14,6 @@ class Authed(SessionCallable):
         the client socket.
         """
         self.log(f'QR Auth module received message, len({len(payload)}) Binary: {binary}')
+
+    def created(self, index):
+        self.log(f'QR created at index {index}')

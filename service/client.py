@@ -4,7 +4,8 @@ from wlog import color_plog
 log = color_plog('red').announce(__spec__)
 
 USERNAMES = {
-    'api_key_1': ('test1', '/')
+    'api_key_1': ('test1', '/'),
+    'api_key_2': ('test1', '/key123'),
 }
 
 
@@ -22,8 +23,17 @@ CLIENTS = {
                 hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
                 # modules for authenticating the onConnect; AUTH 0.
                 connect=(
-                        ('contrib.connect.site.Authed', { 'password': b'secret'}),
+                        ('contrib.connect.auth.Password', { 'password': b'secret'}),
                         'contrib.connect.qr.Authed',
+                    )
+            ),
+        'api_key_2': dict(
+                debug=True,
+                origins=('file://', 'ws://'),
+                entries=('key123',),
+                hosts=('127.0.0.1',),
+                connect=(
+                        ('contrib.connect.auth.Password', { 'password': b'secret'}),
                     )
             )
     }
