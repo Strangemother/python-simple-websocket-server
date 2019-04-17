@@ -295,8 +295,6 @@ class SessionManager(Handler):
             session_stash['index'] += 1
             self.run_routine(name, session, unit.client_space)
 
-
-
     def present_fail(self, unit):
         """Assert the given unit as valid, being asserted by the unit itself.
         """

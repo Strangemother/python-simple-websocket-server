@@ -8,7 +8,7 @@ USERNAMES = {
 }
 
 
-# Persistend records...
+# Persistent records...
 CLIENTS = {
     'test1': {
         'api_key_1': dict(
