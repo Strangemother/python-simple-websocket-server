@@ -13,4 +13,4 @@ class Authed(SessionCallable):
         """When _in-process_ the Auth instance captures messages directly from
         the client socket.
         """
-        self.log(f'Auth module received message, len({len(payload)}) Binary: {binary}')
+        self.log(f'QR Auth module received message, len({len(payload)}) Binary: {binary}')

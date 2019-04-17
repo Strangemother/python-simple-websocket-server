@@ -178,7 +178,10 @@ class SessionManager(Handler):
         current = self.get_current_routine(name, session, client_space)
         session_stash = session[name]
         current.recv_session(session, session_stash)
+        # Store the active handler unit
         session['routine'] = current
+        # Store the current proc for step actuation.
+        session['current'] = name
         # move pointer or wait for incoming.
         # Close and wait (sleep) for next step action.
 
@@ -200,9 +203,10 @@ class SessionManager(Handler):
 
         # Provide with the existing session content for the module
         # to utilise as required.
-        self.log('Generating current routine instance...')
+        self.log('Generating new current routine instance...', index, _Routine)
         # contrib.connect.site.Authed
         instance = _Routine(self, client_space, init_session_stash)
+        self.log(instance.__module__, instance.__class__.__name__)
 
         return instance
 
@@ -285,6 +289,13 @@ class SessionManager(Handler):
         if unit == self_session['routine']:
             # The current routine has asserted  itself
             self.log(f'routine validation of {uuid}')
+            name = self_session['current']
+            session_stash = session[name]
+            self.log(f'routine validation of {uuid}', name, session_stash)
+            session_stash['index'] += 1
+            self.run_routine(name, session, unit.client_space)
+
+
 
     def present_fail(self, unit):
         """Assert the given unit as valid, being asserted by the unit itself.
