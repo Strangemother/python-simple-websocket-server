@@ -23,8 +23,15 @@ CLIENTS = {
                 hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
                 # modules for authenticating the onConnect; AUTH 0.
                 connect=(
-                        ('contrib.connect.auth.Password', { 'password': b'secret'}),
-                        'contrib.connect.qr.Authed',
+                        ('contrib.connect.auth.Password', { 'password': b'secret'}, ),
+                        ('contrib.connect.qr.Authed',
+                            # QRCode(
+                            # content=b'otpauth://totp/strangemother demo?
+                            #   secret=gegoyuja4liponix',
+                            # error='H',
+                            # version=6,
+                            # mode='binary')
+                            { "secret": 'gegoyuja4liponix' },)
                     )
             ),
         'api_key_2': dict(

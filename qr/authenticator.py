@@ -5,6 +5,29 @@ from rand import gen_16
 import pyqrcode
 import os
 
+"""
+import authenticator as au
+
+# signup:
+secret =  au.gen_16() # User record.
+
+
+
+# Add to app:
+label = "My Company"
+url = au.gen_auth_string(label, secret)
+qr = au.create_qr(secret, label, filename='qr-image')
+# CLI present for scan
+au.print_text(qr)
+
+# Scan in auth app.
+
+
+
+# Authenticate:
+token = 230948 # from user
+val = validate_time_auth(token, secret)
+"""
 
 def main():
     global url
@@ -48,8 +71,8 @@ def print_text(url):
             continue
         s = ("██" if x == '1' else '  ')
         print(s, end='')
-
-    #print('color 02')
+    input('press any key to continue')
+    os.system('color 02')
     return url
 
 if __name__ == '__main__':
