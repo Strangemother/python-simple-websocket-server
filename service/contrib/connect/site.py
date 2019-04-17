@@ -15,8 +15,9 @@ class Authed(SessionCallable):
         """When _in-process_ the Auth instance captures messages directly from
         the client socket.
         """
-        res = payload == b'secret'
-        self.log(f'Auth module received message: {payload} == {res} Binary: {binary}')
+        password = self.data['password']
+        res = payload == password
+        self.log(f'Auth module received message: {payload} == {password} = {res} Binary: {binary}')
 
         if res:
             return self.assert_valid()

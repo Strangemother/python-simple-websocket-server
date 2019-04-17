@@ -176,7 +176,8 @@ class SessionManager(Handler):
         # ll('run_routine', session, client_space)
 
         current = self.get_current_routine(name, session, client_space)
-        current.recv_session(session, session[name])
+        session_stash = session[name]
+        current.recv_session(session, session_stash)
         session['routine'] = current
         # move pointer or wait for incoming.
         # Close and wait (sleep) for next step action.
@@ -194,14 +195,14 @@ class SessionManager(Handler):
         # current position
         index = session_stash['index']
         # Generate expected instance; or find from working session
-        _Routine = routines[index]
+        _Routine, init_session_stash = routines[index]
         ## populate with existing data
 
         # Provide with the existing session content for the module
         # to utilise as required.
         self.log('Generating current routine instance...')
         # contrib.connect.site.Authed
-        instance = _Routine(self, client_space)
+        instance = _Routine(self, client_space, init_session_stash)
 
         return instance
 
@@ -220,8 +221,12 @@ class SessionManager(Handler):
         items = ()
 
         for loc in locations:
+            init_session_stash = {}
             self.log('locating', loc)
-            items += (locate(loc), )
+            if isinstance(loc, (tuple, list,)):
+                loc, init_session_stash = loc
+            item = (locate(loc), init_session_stash,)
+            items += (item, )
 
         self.log(f'Recording new items to ROUTINES[{client_space.uuid}][{name}]')
         ROUTINES[client_space.uuid][name] = items

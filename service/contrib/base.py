@@ -6,7 +6,7 @@ log = color_plog('yellow').announce(__spec__)
 
 class SessionCallable(object):
 
-    def __init__(self, manager, client_space):
+    def __init__(self, manager, client_space, init_session_stash):
         """
             Session: The users connected session information
             client_space: the persistent definition created by the owner
@@ -15,6 +15,7 @@ class SessionCallable(object):
         """
         self.manager = manager
         self.client_space = client_space
+        self.data = init_session_stash
         def ll(*a):
             if client_space.debug:
                 self.manager.to_main_thread(client_space.uuid, *a)
@@ -25,7 +26,7 @@ class SessionCallable(object):
 
     def recv_session(self, session, session_stash):
         self.session = session
-        self.data = session_stash
+        self.data.update(session_stash)
         self.log(f'module index {session_stash["index"]}')
 
 
