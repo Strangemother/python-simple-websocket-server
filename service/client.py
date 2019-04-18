@@ -5,21 +5,26 @@ log = color_plog('red').announce(__spec__)
 
 # A record of users associated with an API key.
 USERNAMES = {
-    'api_key_1': ('test1', '/'),
-    'api_key_2': ('test1', '/key123'),
+    'api_key_1': ('test1', ('entries_url_0ASD9F0AIF', '',) ),
+    'api_key_2': ('test1', 'key123'),
 }
 
+PUBLIC = {
+    'daves-endpoint': ('test1', 'api_key_1', 'entries_url_0ASD9F0AIF')
+}
 
 # Persistent records...
 CLIENTS = {
+    'test2': {},
     'test1': {
+        # A single socket system.
         'api_key_1': dict(
                 # Flag for more output and freedom
                 debug=True,
                 # Accessible openers
                 origins=('https://', 'https://', 'file://', 'ws://'),
                 # API key URL or param key
-                entries=('', '0ASD9F0AIF_my_special_app_key',),
+                entries=('', 'entries_url_0ASD9F0AIF',),
                 # Allowed incoming host
                 hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
                 # modules for authenticating the onConnect; AUTH 0.
@@ -90,52 +95,84 @@ def get_client(uuid, request):
 
     path = '-'.join(request.path.split('/')[1:])
     # build name
-    username = get_username(path, api_key)
+    username, user_pointer = get_username_pointer(path, api_key)
     # return config specific to key
-    ok, space = get_user_space(username, api_key)
+    ok, space = get_user_space(username, user_pointer)
 
     if ok is False:
         log('-- space failure\n')
         space['fail'] = ok
         return ok, space
 
+    space.user_pointer = user_pointer
     space.uuid = uuid
 
     # Check the basic path, origin, peer - this should move...
-    assert path in space.entries
+    if (user_pointer.path in space.entries) is False:
+        log(f'Bad path: "{path}" is not in {space.entries}')
+        return False, space
     assert request.host in space.hosts
     assert request.origin in space.origins
 
     return ok, space
 
 
-def get_username(path, api_key):
+def get_username_pointer(path, api_key):
     """Return a username for the given api key - only if the 'path' mathes the
     stored path in USERNAMES
     """
+    log(f'get_username({path}, {api_key})')
     udata = USERNAMES.get(api_key, None)
     if udata is None:
-        log('bad api_key')
-        return
+        resource = PUBLIC.get(path, None)
+        if resource:
+            # found a pointer to private content
+            log(f'Found public URL "{path}" for api_key: {api_key}: {resource}')
+            real_user = api_key
+            public_path = path
+            username, api_key, path = resource
+            log(f'Connecting user "{real_user}" to "{username}::{api_key}" through "{path}"')
+            return real_user, UserPointer(username, api_key, path, public_path)
+        else:
+            log(f'bad api_key: "{api_key}" is not a client.USERNAMES through {path}')
+    else:
+        username, allowed_paths = udata
+        if path in allowed_paths:
+            return username, UserPointer(username, api_key, path, path)
+    log(f'Will not return username, given path "{path}" does not match allowed path "{allowed_paths}"')
+    return (None, None, )
 
-    username, allowed_path = udata
-    if allowed_path[1:] == path:
-        return username
-    log(f'Will not return username, given path "{path}" does not match allowed path "{allowed_path}"')
 
+class UserPointer(object):
 
-def get_user_space(username, api_key):
+    def __init__(self, username, api_key, path, public_path):
+        self.username = username
+        self.api_key = api_key
+        self.path = path
+        self.public_path = public_path
+
+def get_user_space(username, user_pointer):
     """Return a persistent record of the user configuration relative to the given
     username and API key.
     """
-    client = CLIENTS.get(username)
+    api_key = user_pointer.api_key
+
+    client = CLIENTS.get(user_pointer.username)
     if client is None:
         log('Username does not exist:', username)
         return False, Struct({
                 "reason": f"username does not exist {username}",
                 "username": username
             })
-    space = client[api_key]
+    space = client.get(api_key, None)
+    if space is None:
+        log(f'client space "{api_key}" for "{username}" does not exist - ')
+        return False, Struct({
+                "reason": f'Client space "{api_key}" does not exist for {username}',
+                "username": username
+
+            })
+
     space['entry_username'] = username
     res = Struct(space)
     return True, res
