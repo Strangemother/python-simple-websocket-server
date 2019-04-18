@@ -26,6 +26,12 @@ class Authed(SessionCallable):
         """
         self.log(f'QR Auth module received message, len({len(payload)}) Binary: {binary}')
         token = payload.decode('utf')
+
+        # Debug hotwire.
+        if (self.client_space.debug is True) and token == '666':
+            self.log('\n\n hotwire allowed - - MARK OF TEH GOATS!! RAAAAN!')
+            return self.assert_valid()
+
         is_valid = au.validate_time_auth(token, self.data['secret'])
         if is_valid:
             return self.assert_valid()
