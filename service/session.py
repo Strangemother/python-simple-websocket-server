@@ -25,11 +25,15 @@ class AUTH:
 
 # unique data for a connecting user
 USER_DATA = {
-    'test1': {
+    'test2': {
         # settings for each unit.
         'details': {
             'contrib.connect.auth.Password': { 'password': b'horse'},
             'contrib.connect.qr.Authed': { "secret": 'gegoyuja4liponix' },
+        }
+    },
+    'test1': {
+        'details': {
             'contrib.connect.sms.TextLocal': { 'tel': '447480924803' },
         }
     }
@@ -223,7 +227,7 @@ class SessionManager(Handler):
 
         # decorate with user specific init data
         client_data = self.get_client_data(_Routine.pointer, session, client_space)
-        init_session_stash.update(client_data)
+        init_session_stash.update(client_data or {})
         # Provide with the existing session content for the module
         # to utilise as required.
         # contrib.connect.site.Authed
@@ -240,6 +244,7 @@ class SessionManager(Handler):
         data = USER_DATA.get(username)
         if data is None:
             self.log(f'User data does not exist for {username}')
+            return
         # fetch the addon data for the given routine - ID'd by its import string
         loc = data.get('details').get(loc_string, None)
         return loc
@@ -303,6 +308,7 @@ class SessionManager(Handler):
         websocket client.
         """
         now = datetime.now()
+        # pre test
         session = dict(uuid=uuid, request=request, start_time=now)
         log('new user', uuid, '- wait for client', session['start_time'])
         # Ensure websocket session is ready - load channel specific modules

@@ -63,6 +63,9 @@ Client-side libraries will encrypt the information for server delivery. Providin
 
 Therefore sniffing yields encrypted packets only
 
+### SMS
+### EMAIL
+### AUTH APP
 
 ---
 
