@@ -23,6 +23,17 @@ class AUTH:
     # All good users should have an INIT state - allowing an open connection.
     INIT = 1
 
+# unique data for a connecting user
+USER_DATA = {
+    'test1': {
+        # settings for each unit.
+        'details': {
+            'contrib.connect.auth.Password': { 'password': b'horse'},
+            'contrib.connect.qr.Authed': { "secret": 'gegoyuja4liponix' },
+            'contrib.connect.sms.TextLocal': { 'tel': '447480924803' },
+        }
+    }
+}
 
 SESSIONS = {}
 
@@ -209,6 +220,10 @@ class SessionManager(Handler):
         if ('valid' in init_session_stash) is False:
             self.log('Setting init_session_stash[valid] as False')
             init_session_stash['valid'] = False
+
+        # decorate with user specific init data
+        client_data = self.get_client_data(_Routine.pointer, session, client_space)
+        init_session_stash.update(client_data)
         # Provide with the existing session content for the module
         # to utilise as required.
         # contrib.connect.site.Authed
@@ -217,6 +232,17 @@ class SessionManager(Handler):
         self.log(instance.__module__, instance.__class__.__name__)
 
         return instance
+
+    def get_client_data(self, loc_string, session, client_space):
+        username = client_space.entry_username
+        self.log(f'get_client_data {loc_string} {session}, {username}', color='white')
+        # user specific record
+        data = USER_DATA.get(username)
+        if data is None:
+            self.log(f'User data does not exist for {username}')
+        # fetch the addon data for the given routine - ID'd by its import string
+        loc = data.get('details').get(loc_string, None)
+        return loc
 
     def get_routines(self, name, client_space):
         """Given a list of string dotted notations, resolve the pointer
@@ -247,6 +273,8 @@ class SessionManager(Handler):
                     spacer = '\n\n{}\n\n'.format('-' * 40)
                     self.log(f'\n{spacer}CONTINUE - Ignore issue:\n{err}{spacer}\n', color='red')
                     continue
+
+            discovered.pointer = loc
 
             item = (discovered, init_session_stash,)
             items += (item, )

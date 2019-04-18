@@ -1,8 +1,14 @@
-"""Validate a session with a QR client response.
-"""
-from contrib.base import SessionCallable
+"""Use a time based auth token to authenticate an incoming user during a connect
+phase.
 
+Presuming the user has previously signed-up and authenticated a google
+authenticator, they present a 'token' through the pipe. If the given
+token matches the internal generated token (based upon the secret), assert_valid.
+"""
 import sys
+
+
+from contrib.base import SessionCallable
 
 sys.path.append('C:\\Users\\jay\\Documents\\projects\\websocket\\qr')
 import authenticator as au

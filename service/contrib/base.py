@@ -51,7 +51,7 @@ class SessionCallable(object):
 
     def created(self, index):
         """Called bt the session manager when a new instance of this class is
-        gnerated for tracking a users flow.
+        generated for tracking a users flow.
         """
         self.log(f'Created {self.__class__.__name__} at position {index}')
 
