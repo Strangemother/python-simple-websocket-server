@@ -11,4 +11,4 @@ def hello_world(path=None):
     print(requst.POST)
     return f'Hello, World! {path}'
 
-app.run(debug=True, port=8003)
+app.run(debug=True, port=8003, host='0.0.0.0')
