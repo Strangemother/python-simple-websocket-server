@@ -18,6 +18,18 @@ def keyboard_interrupt_watch():
         yield from asyncio.sleep(1)
         # log("First Worker Executed")
 
+@asyncio.coroutine
+def manager_loop(factory, pipes):
+    """
+    """
+
+    while True:
+        yield from asyncio.sleep(1)
+        clients = factory.clients
+        for cl in clients:
+            cl.send_text('Manager said hello')
+        # log("First Worker Executed")
+
 
 # @asyncio.coroutine
 # def secondWorker():
@@ -87,11 +99,14 @@ def start_loop(factory, ip, port, keyboard_watch=True):
     coro_gen = loop.create_server(factory, ip, port)
     server = loop.run_until_complete(coro_gen)
 
-    connect.start()
+    pipes = connect.start()
 
     if keyboard_watch:
         log('CTRL+C watch')
         asyncio.ensure_future(keyboard_interrupt_watch())
+
+    asyncio.ensure_future(manager_loop(factory, pipes))
+
 
     try:
         log('Step into run run_forever')

@@ -41,6 +41,7 @@ def start():
 
     asyncio.ensure_future(pipe_monitor(pipe, proc_pipes))
     log('.Done. continue start.')
+    return proc_pipes
 
 
 @asyncio.coroutine

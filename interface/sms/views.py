@@ -21,6 +21,7 @@ class IndexView(TemplateView):
 
 from django.views.decorators.csrf import csrf_exempt
 
+
 class ReplyView(TemplateView):
     """Receive the third-party call to 'receipt_url' of an outbound SMS.
     The receipt contains a validity statement of a sent message.
