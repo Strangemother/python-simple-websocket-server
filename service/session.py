@@ -34,7 +34,12 @@ USER_DATA = {
     },
     'test1': {
         'details': {
-            'contrib.connect.sms.TextLocal': { 'tel': '447480924803' },
+            'contrib.connect.auth.Password': { 'password': b'666'},
+            'contrib.connect.sms.TextLocalAnnounce': {
+                'tel': '447480924803',
+                'debug': False,
+                #'reply': 'http://3deb9232.ngrok.io'
+            }#'debug': False },
         }
     }
 }
@@ -178,7 +183,9 @@ class SessionManager(Handler):
         # Begin modules as per client authing.
         session['connect'] = { 'index': 0 }
         ROUTINES[uuid] = {}
-        self.run_routine("connect", session, client_space)
+        # content returned from the on_connect hook.
+        on_result = self.run_routine("connect", session, client_space)
+        # force stop welcome?
 
     def run_routine(self, name, session, client_space):
         """Run the procedural steps for the client defined by the given name.
@@ -201,8 +208,12 @@ class SessionManager(Handler):
         session['routine'] = current
         # Store the current proc for step actuation.
         session['current'] = name
+
+        # Run the specific hook for the routine name. i.e 'connect'
+        result = getattr(current, f"on_{name}")()
         # move pointer or wait for incoming.
         # Close and wait (sleep) for next step action.
+        return result
 
     def get_current_routine(self, name, session, client_space):
         """Return the _current_ step the user should exist within, either new
@@ -232,7 +243,7 @@ class SessionManager(Handler):
         # to utilise as required.
         # contrib.connect.site.Authed
         instance = _Routine(self, client_space, init_session_stash)
-        instance.created(index)
+        instance.created(name, index)
         self.log(instance.__module__, instance.__class__.__name__)
 
         return instance

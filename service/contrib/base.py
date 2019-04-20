@@ -16,6 +16,7 @@ class SessionCallable(object):
         self.manager = manager
         self.client_space = client_space
         self.data = init_session_stash
+
         def ll(*a):
             if client_space.debug:
                 self.manager.to_main_thread(client_space.uuid, *a)
@@ -49,7 +50,7 @@ class SessionCallable(object):
         self.log('Fail')
         self.manager.present_fail(self)
 
-    def created(self, index):
+    def created(self, action, index):
         """Called bt the session manager when a new instance of this class is
         generated for tracking a users flow.
         """
@@ -63,4 +64,7 @@ class SessionCallable(object):
             self.log("I'm closing well!")
         else:
             self.log("Closing whilst invalid")
+
+    def on_connect(self):
+        self.log('Routine on_connect')
 

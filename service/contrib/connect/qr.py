@@ -38,5 +38,5 @@ class Authed(SessionCallable):
         self.assert_fail()
 
 
-    def created(self, index):
-        self.log(f'QR created at index {index}')
+    def created(self, action, index):
+        self.log(f'QR created at index {action}::{index}')

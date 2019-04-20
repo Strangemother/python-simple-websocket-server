@@ -10,7 +10,8 @@ USERNAMES = {
 }
 
 PUBLIC = {
-    'daves-endpoint': ('test1', 'api_key_1', 'entries_url_0ASD9F0AIF')
+    'daves-endpoint': ('test1', 'api_key_1', 'entries_url_0ASD9F0AIF'),
+    'txt': ('test1', 'api_key_1', 'entries_url_0ASD9F0AIF'),
 }
 
 # Persistent records...
@@ -31,7 +32,7 @@ CLIENTS = {
                 connect=(
                         ('contrib.connect.auth.Password',{ 'password': b'secret'}),
                         ('contrib.connect.qr.Authed', { "secret": 'gegoyuja4liponix' }, ),
-                        ('contrib.connect.sms.TextLocal',
+                        ('contrib.connect.sms.TextLocalAnnounce',
                             { 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH' }, ),
                     )
             ),
@@ -123,6 +124,7 @@ def get_username_pointer(path, api_key):
     """
     log(f'get_username({path}, {api_key})')
     udata = USERNAMES.get(api_key, None)
+    allowed_paths = ''
     if udata is None:
         resource = PUBLIC.get(path, None)
         if resource:
@@ -140,6 +142,7 @@ def get_username_pointer(path, api_key):
         if path in allowed_paths:
             return username, UserPointer(username, api_key, path, path)
     log(f'Will not return username, given path "{path}" does not match allowed path "{allowed_paths}"')
+
     return (None, None, )
 
 
@@ -155,6 +158,9 @@ def get_user_space(username, user_pointer):
     """Return a persistent record of the user configuration relative to the given
     username and API key.
     """
+    if user_pointer is None:
+        log('UserPointer is None for', username)
+        return False, Struct({})
     api_key = user_pointer.api_key
 
     client = CLIENTS.get(user_pointer.username)
