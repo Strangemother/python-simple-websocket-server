@@ -8,7 +8,7 @@ app = Flask(__name__)
 def hello_world(path=None):
     print(path)
     print(request.method)
-    print(requst.POST)
+    print(request.form)
     return f'Hello, World! {path}'
 
 app.run(debug=True, port=8003, host='0.0.0.0')
