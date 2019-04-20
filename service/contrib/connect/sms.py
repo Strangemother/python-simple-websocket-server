@@ -41,23 +41,29 @@ class TextLocalAnnounce(TextLocal):
         # host', '127.0.0.1'
 
         # Wait for SMS reply
-        wait_confirm = self.data.get('reply', None)
+        wait_confirm = self.data.get('sms_confirm', None)
         content = f'Incoming connection from "{r.peer}" through: {r.path}'
+
         if wait_confirm:
             content = f"{content}\n\nAccept?"
+
         # ensure one sms only.
         assert len(content) < 160
 
-        self.send_txt_msg(to_numbers, content)
-                         # receipt_url=wait_confirm)
+        self.send_txt_msg(to_numbers, content,
+                         receipt_url=self.data.get('receipt_url'))
 
     def send_txt_msg(self, to_numbers, content, **kw):
         is_test = self.data.get('debug', self.client_space.debug)
         apikey = self.data['apikey']
-        kw['custom'] = id(self)
+        kw['custom'] = self.client_space.uuid
         kw['test'] = kw.get('test', is_test)
+        kw['simple_reply'] = 'true' if self.data.get('sms_confirm', False) else 'false'
+
         self.log(f'Sending SMS:\nTO: {to_numbers}\n{content}\n\n{kw}\n')
-        return send_sms(apikey, to_numbers, content, **kw)
+        send_result = send_sms(apikey, to_numbers, content, **kw)
+
+        return send_result
 
 
 
@@ -71,10 +77,9 @@ def send_sms(apikey, numbers, message, test=False, **kw):
         'numbers': numbers,
         'message' : message,
         'test': test,
-        #'receipt_url': '082d151a.ngrok.io/',
-
+        'receipt_url': kw.get('receipt_url', None),
         # ! Must pass 'true' - not a True boolean to function
-        'simple_reply': 'true' if kw.get('simple_reply', True) else 'false',
+        'simple_reply': kw.get('simple_reply', False)
     }
 
     rdata.update(kw)

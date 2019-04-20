@@ -33,7 +33,12 @@ CLIENTS = {
                         ('contrib.connect.auth.Password',{ 'password': b'secret'}),
                         ('contrib.connect.qr.Authed', { "secret": 'gegoyuja4liponix' }, ),
                         ('contrib.connect.sms.TextLocalAnnounce',
-                            { 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH' }, ),
+                            {
+                                'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH',
+                                # The user must reply on text.
+                                'sms_confirm': True,
+                                'receipt_url': 'http://one.briansdojo.co.uk:8000/recv/',
+                            },),
                     )
             ),
         'api_key_2': dict(
