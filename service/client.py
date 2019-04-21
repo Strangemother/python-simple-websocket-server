@@ -37,7 +37,7 @@ CLIENTS = {
                                 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH',
                                 # The user must reply on text.
                                 'sms_confirm': True,
-                                'receipt_url': 'http://one.briansdojo.co.uk:8000/recv/',
+                                'receipt_url': 'http://one.briansdojo.co.uk:8000/sms/receipt/',
                             },),
                     )
             ),
