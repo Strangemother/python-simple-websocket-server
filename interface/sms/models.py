@@ -25,6 +25,14 @@ class Receipt(models.Model):
         for key in fields:
             md[key] = data.get(key)
 
+        _map = dict(
+            #='447537402499',
+            customID='custom',
+            )
+
+        for key in  _map:
+            md[_map[key]] = data.get(key)
+
         recv = md['datetime']
         if isinstance(recv, str):
             # '2019-04-20 20:13:32

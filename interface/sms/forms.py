@@ -74,5 +74,5 @@ class ReceiptForm(forms.Form):
     number = forms.CharField(max_length=20)
     status = forms.CharField(max_length=1)
     submit = forms.CharField(max_length=100)
-    custom = forms.CharField(max_length=255, required=False)
+    customID = forms.CharField(max_length=255, required=False)
     datetime = forms.CharField(max_length=30)
