@@ -159,6 +159,7 @@ class UserPointer(object):
         self.path = path
         self.public_path = public_path
 
+
 def get_user_space(username, user_pointer):
     """Return a persistent record of the user configuration relative to the given
     username and API key.

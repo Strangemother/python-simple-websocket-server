@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -19,8 +20,66 @@ class IndexView(TemplateView):
             kwargs.update(self.extra_context)
         return kwargs
 
-from django.views.decorators.csrf import csrf_exempt
 
+class ReceiptView(TemplateView):
+    """If a client sends an SMS as a reply, the third-party service will
+    call the exposed service with a POST.
+
+        POST
+        ImmutableMultiDict([
+        ('sender', '447480924803'),
+        ('content', 'Thanks ?'),
+        ('inNumber', '447537402499'),
+        ('submit', 'Submit'),
+        ('network', ''),
+        ('email', 'none'),
+        ('keyword', ''),
+        ('comments', 'Thanks ?'),
+        ('credits', '52'),
+        ('msgId', '99173112889'),
+        ('rcvd', '2019-04-20 20:13:32'),
+        ('firstname', 'Jay'),
+        ('lastname', 'Jagpal'),
+        ('custom1', ''),
+        ('custom2', ''),
+        ('custom3', '')])
+        95.138.131.86 - - [20/Apr/2019 19:52:37] "POST / HTTP/1.1" 200 -
+    """
+
+    template_name = "sms/index.html"
+
+    @csrf_exempt(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        """As a third-party
+        """
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def post(self, request, *args, **kwargs):
+
+        # auth, up_set = self.http_auth(request)
+        # if auth is False:
+        #     return self.http_auth_fail()
+        # print('Post Response')
+
+        #d = dict(request.AUTH)
+        # Data must be x-www-form-encoded to accept correctly.
+        f = ReceiptForm(request.POST)
+
+        if f.is_valid():
+            print('valid Receipt')
+            m = Receipt.from_post(f.cleaned_data)
+            m.save()
+        else:
+            print(f.errors)
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+from sms.models import Receipt
+from sms.models import TextMessage as TM
+from sms.forms import TextMessageForm as F
+from sms.forms import ReceiptForm
 
 class ReplyView(TemplateView):
     """Receive the third-party call to 'receipt_url' of an outbound SMS.
@@ -28,28 +87,16 @@ class ReplyView(TemplateView):
 
     The message should be verified for authenticity, stored to an account
     and the session notified through a pipe connection.
+
+
+        POST
+        ImmutableMultiDict([('number', '447480924803'),
+        ('status', 'D'),
+        ('submit', 'Submit'),
+        ('customID', ''),
+        ('datetime', '2019-04-20 20:13:33')])
+
     """
-
-    template_name = "sms/index.html"
-
-    @csrf_exempt(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        """As a third-party
-        """
-        return super().dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.get(request, *args, **kwargs)
-
-
-class ReceiptView(TemplateView):
-    """Receive the third-party call to 'receipt_url' of an outbound SMS.
-    The receipt contains a validity statement of a sent message.
-
-    The message should be verified for authenticity, stored to an account
-    and the session notified through a pipe connection.
-    """
-
     template_name = "sms/index.html"
 
 
@@ -60,10 +107,27 @@ class ReceiptView(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        return self.get(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+        auth, up_set = self.http_auth(request)
+        if auth is False:
+            return self.http_auth_fail()
+        print('Post Response')
+
+        #d = dict(request.AUTH)
+        # Data must be x-www-form-encoded to accept correctly.
+        f = F(request.POST)
+
+        if f.is_valid():
+            print('valid')
+            m = TM.from_post(f.cleaned_data)
+            m.save()
+        else:
+            print(f.errors)
+
         context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def http_auth(self, request):
 
         if 'HTTP_AUTHORIZATION' in request.META:
             auth = request.META['HTTP_AUTHORIZATION'].split()
@@ -73,8 +137,19 @@ class ReceiptView(TemplateView):
                 if auth[0].lower() == "basic":
                     au_by = auth[1].encode('utf')
                     uname, passwd = base64.b64decode(au_by).split(b':')
-            return self.render_to_response(context)
+                    return True, (uname, passwd,)
+        return False, None
 
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+
+        auth, up_set = self.http_auth(request)
+        if auth is False:
+            return self.http_auth_fail()
+
+        return self.render_to_response(context)
+
+    def http_auth_fail(self):
         response = HttpResponse()
         realm = ''
         response.status_code = 401
