@@ -67,8 +67,9 @@ class ReceiptView(TemplateView):
         f = ReceiptForm(request.POST)
 
         if f.is_valid():
-            print('valid Receipt')
-            m = Receipt.from_post(f.cleaned_data)
+            d = f.cleaned_data
+            print('valid Receipt', d)
+            m = Receipt.from_post(d)
             m.save()
         else:
             print(f.errors)
