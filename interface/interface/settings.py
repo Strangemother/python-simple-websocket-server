@@ -25,7 +25,9 @@ SECRET_KEY = 'j12q)wa(6h)^cs)ud+^hmx#l$0%xt#2kpcj+rcks^3oic1!f#^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "one.briansdojo.co.uk"
+]
 
 # AUTH_USER_MODEL = 'accounts.User'
 # Application definition
