@@ -26,7 +26,8 @@ SECRET_KEY = 'j12q)wa(6h)^cs)ud+^hmx#l$0%xt#2kpcj+rcks^3oic1!f#^'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "one.briansdojo.co.uk"
+    "one.briansdojo.co.uk",
+    'localhost',
 ]
 
 # AUTH_USER_MODEL = 'accounts.User'
