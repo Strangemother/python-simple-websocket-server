@@ -135,7 +135,9 @@ class ReplyView(TemplateView):
             print('valid reply')
             mo = TM.from_post(f.cleaned_data)
             mo.save()
-            m.post('reply', model_to_dict(mo))
+            md =  model_to_dict(mo)
+            md['custom'] = mo.custom1
+            m.post('reply', md)
         else:
             print(f.errors)
 
