@@ -16,7 +16,7 @@ lock = None
 # A Persistent location of cached UUIDs.
 
 
-def start():
+def start(ip, port):
     """Called by an external process to initial the internal machinery of pipe
     communication and thread.
     """
