@@ -32,11 +32,11 @@ CLIENTS = {
                 connect=(
                         ('contrib.connect.auth.Password',{ 'password': b'secret'}),
                         ('contrib.connect.qr.Authed', { "secret": 'gegoyuja4liponix' }, ),
-                        ('contrib.connect.sms.TextLocalAnnounce',
+                        ('contrib.connect.sms.TextLocal',
                             {
                                 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH',
                                 # The user must reply on text.
-                                'sms_confirm': True,
+                                #'sms_confirm': True,
                                 'ask_random': True,
                                 # catch-all endpoint for receipts
                                 'receipt_url': 'http://one.briansdojo.co.uk:8000/sms/receipt/',

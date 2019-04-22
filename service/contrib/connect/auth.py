@@ -6,9 +6,9 @@ After AUTH.INIT (0) the welcome routine proceeds with ROUTINES. Basic auth
 routines help validate an incoming client before content delivery.
 
 A Basic auth requires no development. An example of a password first input - note
-this is a test and a secure example of password verification:
+this is a test and an insecure example of password verification:
 
-An session unit can call assert_valid() and assert_fail() for the session manager
+A session unit can call assert_valid() and assert_fail() for the session manager
 to control:
 
 

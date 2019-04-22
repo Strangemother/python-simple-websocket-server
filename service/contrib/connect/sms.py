@@ -4,11 +4,43 @@ import urllib.parse
 import urllib.request
 import uuid;
 
+SMS_API = "https://api.txtlocal.com"
+
 
 class TextLocal(SessionCallable):
+    """Send a text to the owner or client/user of the connection during a 'connect'
+    phase.
+
+    To use first apply the routine to the client details:
+
+         ('contrib.connect.sms.TextLocalAnnounce',
+            {
+                'apikey': '/13-456789',
+                # The user must reply on text.
+                'sms_confirm': True,
+                'ask_random': True,
+                # catch-all endpoint for receipts
+                'receipt_url': 'http://emaple.com:8000/sms/receipt/',
+
+                # 'tel': '447412344683',
+                # 'debug': True,
+            },),
+
+    the 'tel' and 'debug' argument may be given through the API - or here if required.
+    'on_connect' will send a confirmation text message.
+
+    if 'sms_confim' the user must reply - send to 'session_recv_reply'.
+
+    A receipt from the third-party is pushed through the manager > session connection
+    to 'session_recv_receipt'.
+
+    If 'ask_random' an 8 digit key sent via sms must be applied through the socket.
+    Any messages before the assert_valid are currently dropped
+    """
+
 
     # def recv_msg(self, data, binary=False):
-    def xcreated(self, name, index):
+    def example(self, name, index):
         contact_number = self.data['tel']
         apikey = self.data['apikey']
         test = self.data.get('debug', self.client_space.get('debug'))
@@ -22,11 +54,6 @@ class TextLocal(SessionCallable):
         resp, code = get_sms(apikey, iid)
         self.log('get_sms', resp)
 
-
-class TextLocalAnnounce(TextLocal):
-    """Send a text to the owner or client/user of the connection during a 'connect'
-    phase.
-    """
 
     def created(self, name, index):
         """Build mini-state.
@@ -93,7 +120,12 @@ class TextLocalAnnounce(TextLocal):
         kw['simple_reply'] = 'true' if self.data.get('sms_confirm', False) else 'false'
 
         self.log(f'Sending SMS:\nTO: {to_numbers}\n{content}\n\n{kw}\n')
+
         send_result = send_sms(apikey, to_numbers, content, **kw)
+        if is_test is True:
+            # receipt cannot occur as the sms will never send.
+            self.log(f"!! -- Simulating 'receipt' as sms 'test' is True")
+            self.set_state('receipt', True)
 
         return send_result
 
@@ -125,7 +157,6 @@ class TextLocalAnnounce(TextLocal):
         self.log('Assert Correct random key')
         self.set_state('random', True)
         return
-
 
     def session_recv_reply(self, payload, binary=False):
         """The user has replied through the session - connected through the custom
@@ -176,9 +207,6 @@ class TextLocalAnnounce(TextLocal):
         self.log(ms)
 
 
-SMS_API = "https://api.txtlocal.com"
-
-
 # http://api.txtlocal.com/docs/sendsms
 def send_sms(apikey, numbers, message, test=False, **kw):
     rdata = {
@@ -187,7 +215,7 @@ def send_sms(apikey, numbers, message, test=False, **kw):
         'message' : message,
         'test': test,
         'receipt_url': kw.get('receipt_url', None),
-        # ! Must pass 'true' - not a True boolean to function
+        # ! Must pass 'true' - not a True boolean for the third-party to accept.
         'simple_reply': kw.get('simple_reply', False)
     }
 
@@ -208,8 +236,6 @@ def get_inboxes(apikey):
     f = urllib.request.urlopen(f'{SMS_API}/get_inboxes/?'
         + urllib.parse.urlencode(params))
     return (f.read(), f.code)
-
-
 
 
 def get_sms(apikey, iid):
