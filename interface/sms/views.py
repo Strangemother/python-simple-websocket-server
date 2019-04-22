@@ -4,8 +4,21 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 
+from sms.models import Receipt, TextMessage as TM
+from sms.forms import TextMessageForm as F
+from sms.forms import ReceiptForm
+
+
 import base64
 
+print('sms view connecting to session remote manager')
+from multiprocessing.managers import BaseManager
+m = BaseManager(address=('127.0.0.1', 9018), authkey=b'84ytnp9qyn8p3tu8qcp394tpmj')
+m.register('post')
+m.register('hello')
+m.connect()
+m.hello()
+print(':',m)
 
 class IndexView(TemplateView):
     template_name = "sms/index.html"
@@ -69,18 +82,18 @@ class ReceiptView(TemplateView):
         if f.is_valid():
             d = f.cleaned_data
             print('valid Receipt', d)
-            m = Receipt.from_post(d)
-            m.save()
+            mo = Receipt.from_post(d)
+            mo.save()
+            m.post('receipt', model_to_dict(mo))
+
         else:
             print(f.errors)
 
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
-from sms.models import Receipt
-from sms.models import TextMessage as TM
-from sms.forms import TextMessageForm as F
-from sms.forms import ReceiptForm
+
+from django.forms.models import model_to_dict
 
 class ReplyView(TemplateView):
     """Receive the third-party call to 'receipt_url' of an outbound SMS.
@@ -119,9 +132,10 @@ class ReplyView(TemplateView):
         f = F(request.POST)
 
         if f.is_valid():
-            print('valid')
-            m = TM.from_post(f.cleaned_data)
-            m.save()
+            print('valid reply')
+            mo = TM.from_post(f.cleaned_data)
+            mo.save()
+            m.post('reply', mo.cleaned_data)
         else:
             print(f.errors)
 
