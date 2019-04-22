@@ -2,7 +2,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol
 import connect
 
 from wlog import color_plog
-log = color_plog('blue').announce(__spec__)
+log = color_plog('green').announce(__spec__)
 
 """
     'CLOSE_STATUS_CODES_ALLOWED', 'CLOSE_STATUS_CODE_ABNORMAL_CLOSE',
@@ -253,7 +253,10 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
         session pipe from a third party.
         """
         log(f'Protocol session_message {self.uuid}', content)
-        connect.message(self.uuid, content)
+
+        if content[0] == 'receipt':
+            connect.message(self.uuid, content)
+
         self.send_text(content)
 
     def get_headers(self, request):

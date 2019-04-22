@@ -230,7 +230,7 @@ class Handler(object):
         self.my_pipes[0].close()
         self.my_pipes[1].close()
 
-    def lost_msg(self, msg):
+    def lost_recv(self, msg):
         log(f'!! Lost message to session, {msg}')
 
 
