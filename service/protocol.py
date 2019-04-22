@@ -248,6 +248,14 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
         headers = self.get_headers(request)
         return (None, headers)
 
+    def session_message(self, content):
+        """A Message from the recv_session_message(msg) - pushed through the
+        session pipe from a third party.
+        """
+        log(f'Protocol session_message {self.uuid}', content)
+        connect.message(self.uuid, content)
+        self.send_text(content)
+
     def get_headers(self, request):
         headers = {}
         internal_header = 'custom_pre_auth_header'
@@ -289,19 +297,20 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
         err = wasClean, code, reason
         ok, space = connect.close_manager(self.uuid, err, self)
         self.factory.close(self, wasClean=wasClean, code=code, reason=reason)
+
     # def sendHtml(self, html):
-    #     """
-    #     Send HTML page HTTP response.
-    #     """
-    #     responseBody = html.encode('utf8')
-    #     response = "HTTP/1.1 200 OK\x0d\x0a"
-    #     if self.factory.server is not None and self.factory.server != "":
-    #         response += "Server: %s\x0d\x0a" % self.factory.server
-    #     response += "Content-Type: text/html; charset=UTF-8\x0d\x0a"
-    #     response += "Content-Length: %d\x0d\x0a" % len(responseBody)
-    #     response += "\x0d\x0a"
-    #     self.sendData(response.encode('utf8'))
-    #     self.sendData(responseBody)
+        # """
+        # Send HTML page HTTP response.
+        # """
+        # responseBody = html.encode('utf8')
+        # response = "HTTP/1.1 200 OK\x0d\x0a"
+        # if self.factory.server is not None and self.factory.server != "":
+        #     response += "Server: %s\x0d\x0a" % self.factory.server
+        # response += "Content-Type: text/html; charset=UTF-8\x0d\x0a"
+        # response += "Content-Length: %d\x0d\x0a" % len(responseBody)
+        # response += "\x0d\x0a"
+        # self.sendData(response.encode('utf8'))
+        # self.sendData(responseBody)
 
 
     def sendServerStatus(self, redirectUrl=None, redirectAfter=0):
