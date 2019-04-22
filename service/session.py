@@ -125,6 +125,9 @@ def recv_session_message(msg):
     # int ID stored upon message action.
     # I think is should be just a string - therefore the 'STORE' location
     # should store as a string.
+    if uuid is None:
+        log(' !! recv_session_message received an unknown message:\n{msg}')
+        return
     uuid = int(uuid)
 
     log('>', uuid)
