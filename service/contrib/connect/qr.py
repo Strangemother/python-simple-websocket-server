@@ -25,6 +25,9 @@ class Authed(SessionCallable):
         the client socket.
         """
         self.log(f'QR Auth module received message, len({len(payload)}) Binary: {binary}')
+        if isinstance(payload, str) is False:
+            self.log(f'Did not present correct payload: {payload}')
+            self.assert_fail()
         token = payload.decode('utf')
 
         # Debug hotwire.
