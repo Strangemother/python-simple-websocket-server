@@ -56,7 +56,7 @@ class TextLocalAnnounce(TextLocal):
     def send_txt_msg(self, to_numbers, content, **kw):
         is_test = self.data.get('debug', self.client_space.debug)
         apikey = self.data['apikey']
-        kw['custom'] = f'space-{self.client_space.uuid}'
+        kw['custom'] = f'{self.client_space.uuid}'
         kw['test'] = kw.get('test', is_test)
         kw['simple_reply'] = 'true' if self.data.get('sms_confirm', False) else 'false'
 
@@ -64,7 +64,6 @@ class TextLocalAnnounce(TextLocal):
         send_result = send_sms(apikey, to_numbers, content, **kw)
 
         return send_result
-
 
 
 SMS_API = "https://api.txtlocal.com"
