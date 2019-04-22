@@ -49,6 +49,7 @@ MainManager.register('hello', hello)
 MainManager.register('post', post)
 MainManager.register('session_pipes', session_pipes)
 
+
 @asyncio.coroutine
 def manager_loop_client(factory, session_pipes):
     """
