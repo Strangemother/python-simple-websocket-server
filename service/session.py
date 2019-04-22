@@ -105,6 +105,7 @@ def read_pipe(p1, sender_pipe):
     """Called by the pipe_monitor, read the given pipe expecting a recv().
     """
     msg = p1.recv()
+    print('session.read_pipe from pipe_monitor pipe 1', msg)
     #yield from asyncio.wait_for(p1.recv(), 1)
     result = recv_session_message(msg)
     if result is not None:
@@ -126,7 +127,7 @@ def recv_session_message(msg):
     # I think is should be just a string - therefore the 'STORE' location
     # should store as a string.
     if uuid is None:
-        log(' !! recv_session_message received an unknown message:\n{msg}')
+        log(f' !! recv_session_message received an unknown message:\n{msg}')
         return
     uuid = int(uuid)
 
@@ -309,7 +310,8 @@ class SessionManager(Handler):
             connect.message(uuid, content) -> pipe_send("content", uuid, content)
         """
         log('SESSION RECEIVED CONTENT', uuid, content)
-
+        routine = self._get_open_routine(uuid)
+        routine.recv_msg(content)
     def _get_open_routine(self, uuid):
         session = self.get_session(uuid)
         current = None
