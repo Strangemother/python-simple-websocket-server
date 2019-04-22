@@ -311,7 +311,13 @@ class SessionManager(Handler):
         """
         log('SESSION RECEIVED CONTENT', uuid, content)
         routine = self._get_open_routine(uuid)
+        # test for data incoming
+
+        # push to the correct routine
+        #   Perhaps a routine can register expected events therefore
+        #   many routines may run at once.
         routine.recv_msg(content)
+
     def _get_open_routine(self, uuid):
         session = self.get_session(uuid)
         current = None
@@ -383,7 +389,15 @@ class SessionManager(Handler):
         # current position
         index = session_stash['index']
         # Generate expected instance; or find from working session
-        _Routine, init_session_stash = routines[index]
+        try:
+            _routine = routines[index]
+        except IndexError:
+            # last of this session...
+            big_msg = f'\n\n----- current routine "{name}" complete. -----\n'
+            self.log(big_msg)
+            return self.routine_complete(name, session, client_space)
+
+        _Routine, init_session_stash = _routine
         ## populate with existing data
         self.log('Generating new current routine instance...', index, _Routine)
 
@@ -402,6 +416,13 @@ class SessionManager(Handler):
         self.log(instance.__module__, instance.__class__.__name__)
 
         return instance
+
+    def routine_complete(self, name, session, client_space):
+        self.log(f'-- session.SessionManager::routine_complete {name}')
+        self.log(f'-- for client {client_space.uuid}')
+        # reuturn the next routine - such as a COMPLETE or closing routine of
+        # some kind
+        return "NEXT ROUTINE?"
 
     def get_client_data(self, loc_string, session, client_space):
         username = client_space.entry_username
