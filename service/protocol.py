@@ -254,10 +254,10 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
         """
         log(f'Protocol session_message {self.uuid}', content)
 
-        if content[0] == 'receipt':
+        # This is not good.
+        if content[0] in ['receipt', 'reply']:
             connect.message(self.uuid, content)
-            self.send_text(f"confirm sms sent")
-            return
+            self.send_text(f"confirm sms {content[0]}")
 
         self.send_text(f"SESSION_MESSAGE: {content}")
 
