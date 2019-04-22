@@ -13,29 +13,6 @@ session_pipes = None
 
 log = color_plog('white').announce(__spec__)
 
-@asyncio.coroutine
-def keyboard_interrupt_watch():
-    # Loop slowly in the background pumping the asyc queue. Upon keyboard error
-    # this will error earlier than a silent websocket message queue.
-    while True:
-        yield from asyncio.sleep(1)
-        # log("First Worker Executed")
-
-
-def find_address(conf, ip, port):
-    """Extract the ip address and port for the server from the given config
-    or arguments. The config takes precedence
-    """
-    if 'websocket' in conf:
-        log('conf has websocket sub')
-        conf = conf.get('websocket')
-        port = conf.get('port', port) or 9000
-        ip = conf.get('address', ip) or '0.0.0.0'
-        return ip, port
-    port = port or conf.get('port', 9000)
-    ip = ip or conf.get('address', '0.0.0.0')
-    return ip, port
-
 
 def run(port=None, ip=None, keyboard_watch=True, **kw):
     """Run the server, using the given ip,port or extracting from the config.
@@ -53,6 +30,21 @@ def run(port=None, ip=None, keyboard_watch=True, **kw):
     factory = kw.get('factory', BroadcastServerFactory(uri, **server_kwargs))
     factory.protocol = kw.get('protocol', MyServerProtocol)
     start_loop(factory, ip, port, keyboard_watch)
+
+
+def find_address(conf, ip, port):
+    """Extract the ip address and port for the server from the given config
+    or arguments. The config takes precedence
+    """
+    if 'websocket' in conf:
+        log('conf has websocket sub')
+        conf = conf.get('websocket')
+        port = conf.get('port', port) or 9000
+        ip = conf.get('address', ip) or '0.0.0.0'
+        return ip, port
+    port = port or conf.get('port', 9000)
+    ip = ip or conf.get('address', '0.0.0.0')
+    return ip, port
 
 
 def get_config(path=None):
@@ -74,23 +66,22 @@ def get_config(path=None):
 
 
 def start_loop(factory, ip, port, keyboard_watch=True):
+    """
+    Start the server, manager client and run_loop
+    """
     log('Run', ip, port)
 
-    loop = asyncio.get_event_loop()
-    #https://docs.python.org/3/library/asyncio-eventloop.html#creating-network-servers
-    # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Server
-    # https://docs.python.org/3/library/asyncio-protocol.html#asyncio-protocol
-    coro_gen = loop.create_server(factory, ip, port)
-    server = loop.run_until_complete(coro_gen)
-
-    session_pipes = connect.start()
-
     if keyboard_watch:
-        log('CTRL+C watch')
-        asyncio.ensure_future(keyboard_interrupt_watch())
+        ensure_keyboard_interrupt_watch()
 
-    asyncio.ensure_future(manager_loop_client(factory, session_pipes))
+    server, loop = create_server(factory, ip, port)
+    ensure_manager_client(factory, ip, port)
+    run_loop(loop, server)
 
+
+def run_loop(loop, server):
+    """Perform a blocking loop for the ascynio loop. Kill with keyboard interrupt
+    """
     try:
         log('Step into run run_forever')
         loop.run_forever()
@@ -99,10 +90,53 @@ def start_loop(factory, ip, port, keyboard_watch=True):
     except KeyboardInterrupt as e:
         log('Server::KeyboardInterrupt')
     finally:
-        connect.stop()
+        close(server, loop)
+
+
+def close(server=None, loop=None):
+    """Perform a final close on all open handlers:
+    connect, server and loop
+    """
+
+    connect.stop()
+
+    if server:
         server.close()
-        log('Final close')
-        loop.close()
+
+    log('Final close')
+    loop = loop or asyncio.get_event_loop()
+    loop.close()
+
+
+def ensure_manager_client(factory, ip, port):
+    session_pipes = connect.start(ip, port)
+    asyncio.ensure_future(manager_loop_client(factory, session_pipes))
+    return session_pipes
+
+
+def ensure_keyboard_interrupt_watch():
+    log('CTRL+C watch')
+    asyncio.ensure_future(keyboard_interrupt_watch())
+
+
+@asyncio.coroutine
+def keyboard_interrupt_watch():
+    # Loop slowly in the background pumping the asyc queue. Upon keyboard error
+    # this will error earlier than a silent websocket message queue.
+    while True:
+        yield from asyncio.sleep(1)
+        # log("First Worker Executed")
+
+
+def create_server(factory, ip, port):
+    loop = asyncio.get_event_loop()
+    #https://docs.python.org/3/library/asyncio-eventloop.html#creating-network-servers
+    # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Server
+    # https://docs.python.org/3/library/asyncio-protocol.html#asyncio-protocol
+    coro_gen = loop.create_server(factory, ip, port)
+    server = loop.run_until_complete(coro_gen)
+    return server, loop
+
 
 if __name__ == '__main__':
     run()
