@@ -13,12 +13,20 @@ import base64
 
 print('sms view connecting to session remote manager')
 from multiprocessing.managers import BaseManager
-m = BaseManager(address=('127.0.0.1', 9018), authkey=b'84ytnp9qyn8p3tu8qcp394tpmj')
-m.register('post')
-m.register('hello')
-m.connect()
-m.hello()
-print(':',m)
+
+def manager_connect(address_pair=None):
+    address = address_pair or ('127.0.0.1', 9018)
+    m = BaseManager(address=address, authkey=b'84ytnp9qyn8p3tu8qcp394tpmj')
+    # register accepted functions
+    m.register('post')
+    m.register('hello')
+
+    m.connect()
+    m.hello()
+    print(f"interface.sms.view connected to manager {address}")
+    return m
+
+m = manager_connect()
 
 class IndexView(TemplateView):
     template_name = "sms/index.html"
