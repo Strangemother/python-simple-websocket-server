@@ -1,136 +1,33 @@
 import asyncio
 from multiprocessing import Process, Pipe, Lock
 
-from session import SessionManager
+from session import SessionManager, start_process, pipe_monitor, MEM
 from client import get_client
 from wlog import color_plog
 
 
 log = color_plog('cyan').announce(__spec__)
 
-pipe = None
+global_pipe = None
 process = None
 lock = None
 
 
 # A Persistent location of cached UUIDs.
-MEM = {}
 
 
 def start():
     """Called by an external process to initial the internal machinery of pipe
     communication and thread.
     """
-    global pipe
+    global global_pipe
     global proc_pipes
     global process
     global lock
 
-    pipe, child_conn = Pipe()
-    lock = Lock()
-    log('connect::start Process(message_handler)')
-    process = Process(target=message_handler, args=(child_conn, lock))
-    process.start()
+    global_pipe, proc_pipes, process, lock = start_process()
 
-
-    #loop = asyncio.get_event_loop()
-
-    log('... Waiting for first response pipes')
-    proc_pipes = pipe.recv()   # prints "[42, None, 'hello']"
-    log('Recieved. Creating asyncio pipe_monitor')
-
-    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes))
-    log('.Done. continue start.')
     return proc_pipes
-
-
-@asyncio.coroutine
-def pipe_monitor(sender_pipe, proc_pipes):
-    """Bridge the connection between the sesssion handler within the Process
-    (message_handler) and this process.
-
-    The initial response from the message_handler start recv() was a set of
-    pipes generated within the session.SessionManager.
-    Loop the child pipe of the proc_pipes pair. Wait for a recv() message
-    from the session manager. Utilise the MEM of persistent 'connected'
-    client caches.
-    """
-
-    # Loop slowly in the background pumping the asyc queue. Upon keyboard error
-    # this will error earlier than a silent websocket message queue.
-    log('Monitoring session pipe')
-    p1 = proc_pipes[1]
-
-    while True:
-        try:
-            if p1.poll():
-                read_pipe(p1)
-                continue
-            yield from asyncio.sleep(.1)
-        except (asyncio.TimeoutError):
-            log('Pass.')
-        except (KeyboardInterrupt, EOFError) as e:
-            log('Kill pipe:', e)
-            break
-        #yield from asyncio.sleep(1)
-    log("death of pipe monitor")
-
-
-def read_pipe(p1):
-    """Called by the pipe_monitor, read the given pipe expecting a recv().
-    """
-    msg = p1.recv()
-    #yield from asyncio.wait_for(p1.recv(), 1)
-    result = recv_session_message(msg)
-    if result is not None:
-        sender_pipe.send(result)
-
-
-def recv_session_message(msg):
-    """Receive a message from the session manager pipe.
-    Return a value to send back to the session manager.
-    """
-    if len(msg) <= 1:
-        log('Badly formatted session manager response:', msg)
-        return
-    uuid, *args = msg
-
-    log('>')
-    #log(msg)
-    # Locking is not required with a async loop.
-    # lock.acquire()
-    cache = MEM.get(uuid)
-    ret = f'recv_session_message: {args}'
-    try:
-        cache['protocol'].send_text(ret)
-    except TypeError:
-        # dead protocol.
-        log(f'\n\n --- Failed message to {uuid}\n{ret}')
-    return None
-
-
-def message_handler(pipe, lock):
-    """A Process task handler performing a loop on pipe.recv()
-    Pass any messages to the session.SessionManager
-    """
-    log('-- Starting connect handler\n')
-    handler = SessionManager(pipe, lock)
-    # send back into the start method -
-    pipe.send(handler.init_response())
-    while True:
-        try:
-            msg = pipe.recv()
-            if msg == 'close':
-                log('connect.message_handler received message from session pipe')
-                log(message)
-                break
-                handler.kill()
-            handler.recv(msg)
-        except (EOFError, KeyboardInterrupt):
-            log('Closing message_handler')
-            break
-    handler.kill()
-    pipe.close()
 
 
 def pipe_send(*a, _pipe=None):
@@ -139,8 +36,8 @@ def pipe_send(*a, _pipe=None):
     than one item is given as an argument, a tuple is sent.
     """
     if len(a) > 1:
-        a= (a,)
-    (_pipe or pipe).send(*a)
+        a = (a,)
+    (_pipe or global_pipe).send(*a)
 
 
 def connection_manager(uuid, request, protocol):
@@ -155,7 +52,7 @@ def connection_manager(uuid, request, protocol):
     ok, client = get_client(uuid, request)
 
     if ok is False:
-        print("Client failure", uuid)
+        log("Client failure", uuid)
         pipe_send("client_failure", uuid, vars(client))
         return False, client
 
@@ -194,6 +91,11 @@ def open_manager(uuid, protocol):
 
     log(f'!! open_manager assert connection: {uuid}')
     return True, cache
+
+
+def message(uuid, content):
+    pipe_send("content", uuid, content)
+    return True
 
 
 def message_manager(uuid, payload, isBinary):
