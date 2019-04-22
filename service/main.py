@@ -2,9 +2,12 @@
 """
 This is a sample for qpython webapp
 """
-from wlog import plog as log
-
 from optparse import OptionParser
+
+from wlog import plog as log
+from auto_server import run
+
+
 parser = OptionParser()
 parser.add_option("-f", "--file", dest="filename",
                   help="write report to FILE", metavar="FILE")
@@ -21,15 +24,16 @@ parser.add_option("-p", "--port", dest="port", type=int, default=8004,
 parser.add_option("-a", "--address", dest="ip", type=str, default=None,
                   help="Provide a ip")
 
+
 parsed = parser.parse_args()
 
-from auto_server import run
 
 def process_run(options=None, *args, **kw):
     kw.update(vars(options))
     kw['name'] = 'Cheese'
     args = ()
     run(**kw)
+
 
 def main(options, args):
     log('Create service')
