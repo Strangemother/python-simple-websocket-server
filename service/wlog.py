@@ -59,6 +59,11 @@ Spaces = {
 
 def announce(_log, spec):
     # log.announce(__spec__)
+
+    if spec is None:
+        _log('Cannot announce')
+        return _log
+
     name = spec.name
     file = spec.origin
     if file in Spaces:

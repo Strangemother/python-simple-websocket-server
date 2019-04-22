@@ -1,16 +1,153 @@
 """
 The handler manages pipe msgs for background handling of a sibling
 socket session happening elsewhere.
+
+    service.connect.pipe_monitor
 """
 from multiprocessing import Process, Pipe, Lock
 from datetime import datetime
 from pydoc import locate
 import error
+import asyncio
 
 from wlog import color_plog
 
+MEM = {}
 
 log = color_plog('magenta').announce(__spec__)
+
+
+def start_process(loop_message_handler=None):
+    """Called by an external process to initial the internal machinery of pipe
+    communication and thread.
+    """
+    global pipe
+    global proc_pipes
+    global process
+    global lock
+
+    pipe, child_conn = Pipe()
+    lock = Lock()
+    _message_handler = loop_message_handler or message_handler
+    log(f'connect::start Process({_message_handler})')
+    process = Process(target=_message_handler, args=(child_conn, lock))
+    process.start()
+
+
+    #loop = asyncio.get_event_loop()
+
+    log('... Waiting for first response pipes')
+    proc_pipes = pipe.recv()   # prints "[42, None, 'hello']"
+    log('Recieved. Creating asyncio pipe_monitor')
+
+    asyncio.ensure_future(pipe_monitor(pipe, proc_pipes))
+    log('.Done. continue start.')
+    return pipe, proc_pipes, process, lock
+
+
+def message_handler(pipe, lock):
+    """A Process task handler performing a loop on pipe.recv()
+    Pass any messages to the session.SessionManager
+    """
+    log('-- Starting connect handler\n')
+    handler = SessionManager(pipe, lock)
+    # send back into the start method -
+    pipe.send(handler.init_response())
+    while True:
+        try:
+            msg = pipe.recv()
+            if msg == 'close':
+                log(f'connect.message_handler received message from session pipe \n {msg}')
+                handler.kill()
+                break
+            # Handler.recv
+            handler.recv(msg)
+        except (EOFError, KeyboardInterrupt):
+            log('Closing message_handler')
+            break
+    handler.kill()
+    pipe.close()
+
+
+@asyncio.coroutine
+def pipe_monitor(sender_pipe, proc_pipes):
+    """Bridge the connection between the sesssion handler within the Process
+    (message_handler) and this process.
+
+    The initial response from the message_handler start recv() was a set of
+    pipes generated within the session.SessionManager.
+    Loop the child pipe of the proc_pipes pair. Wait for a recv() message
+    from the session manager. Utilise the MEM of persistent 'connected'
+    client caches.
+    """
+
+    # Loop slowly in the background pumping the asyc queue. Upon keyboard error
+    # this will error earlier than a silent websocket message queue.
+    log('Monitoring session pipe')
+    p1 = proc_pipes[1]
+
+    while True:
+        try:
+            if p1.poll():
+                read_pipe(p1, sender_pipe)
+                continue
+            yield from asyncio.sleep(.1)
+        except (asyncio.TimeoutError):
+            log('Pass.')
+        except (KeyboardInterrupt, EOFError) as e:
+            log('Kill pipe:', e)
+            break
+        #yield from asyncio.sleep(1)
+    log("death of pipe monitor")
+
+
+def read_pipe(p1, sender_pipe):
+    """Called by the pipe_monitor, read the given pipe expecting a recv().
+    """
+    msg = p1.recv()
+    #yield from asyncio.wait_for(p1.recv(), 1)
+    result = recv_session_message(msg)
+    if result is not None:
+        sender_pipe.send(result)
+
+
+def recv_session_message(msg):
+    """Receive a message from the session manager pipe.
+    Return a value to send back to the session manager.
+    """
+    if len(msg) <= 1:
+        log('Badly formatted session manager response:', msg)
+        return
+    uuid, *args = msg
+
+    ## WARNING!
+    # This nasty little hack coverts the string ID from the POST to an
+    # int ID stored upon message action.
+    # I think is should be just a string - therefore the 'STORE' location
+    # should store as a string.
+    uuid = int(uuid)
+
+    log('>', uuid)
+    # Locking is not required with a async loop.
+    # lock.acquire()
+
+    cache = MEM.get(uuid)
+    ret = f'recv_session_message: {args}'
+    if cache is None:
+        log(f' {uuid} not in MEM: {MEM}')
+        log(cache.keys())
+        return
+    try:
+        proto = cache['protocol']
+        # protocol.MyServerProtocol.session_message
+        proto.session_message(ret)
+    except TypeError as e:
+        # dead protocol.
+        log(f'\n\n --- Failed message to {uuid}\n{ret}\n{e}::{MEM.keys()}')
+        log(MEM)
+    return None
+
+
 
 
 class AUTH:
@@ -80,15 +217,21 @@ class Handler(object):
             # not a tuple to unpack
             log('Handled unpackage', msg)
             return
+
         method = f"msg_{name}"
         log('Handler:', uuid, method)
         if hasattr(self, method):
             result = getattr(self, method)(uuid, *args)
+        else:
+            self.lost_recv(msg)
 
     def kill(self):
         log(f'kill {__name__}')
         self.my_pipes[0].close()
         self.my_pipes[1].close()
+
+    def lost_msg(self, msg):
+        log(f'!! Lost message to session, {msg}')
 
 
 class SessionManager(Handler):
@@ -156,6 +299,13 @@ class SessionManager(Handler):
         """
         #self.log(f'Received open: {uuid}')
         routine = self._get_open_routine(uuid)
+
+    def msg_content(self, uuid, content):
+        """data content given from the protocol for the session to digest
+
+            connect.message(uuid, content) -> pipe_send("content", uuid, content)
+        """
+        log('SESSION RECEIVED CONTENT', uuid, content)
 
     def _get_open_routine(self, uuid):
         session = self.get_session(uuid)
