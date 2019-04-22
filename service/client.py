@@ -37,7 +37,10 @@ CLIENTS = {
                                 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH',
                                 # The user must reply on text.
                                 'sms_confirm': True,
+                                'ask_random': True,
+                                # catch-all endpoint for receipts
                                 'receipt_url': 'http://one.briansdojo.co.uk:8000/sms/receipt/',
+                                'debug': True,
                             },),
                     )
             ),

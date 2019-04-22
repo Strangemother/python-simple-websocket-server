@@ -13,6 +13,34 @@ import asyncio
 from wlog import color_plog
 
 MEM = {}
+# unique data for a connecting user
+USER_DATA = {
+    'test2': {
+        # settings for each unit.
+        'details': {
+            'contrib.connect.auth.Password': { 'password': b'horse'},
+            'contrib.connect.qr.Authed': { "secret": 'gegoyuja4liponix' },
+        }
+    },
+    'test1': {
+        'details': {
+            'contrib.connect.auth.Password': { 'password': b'666'},
+            'contrib.connect.sms.TextLocalAnnounce': {
+                'tel': '447480924803',
+                #'debug': False,
+                #'reply': 'http://3deb9232.ngrok.io'
+            }#'debug': False },
+        }
+    }
+}
+
+SESSIONS = {}
+
+# A Cache of python discovered routines
+ROUTINES = {}
+
+RAISE = 'raise'
+CONTINUE = 'continue'
 
 log = color_plog('magenta').announce(__spec__)
 
@@ -129,7 +157,13 @@ def recv_session_message(msg):
     if uuid is None:
         log(f' !! recv_session_message received an unknown message:\n{msg}')
         return
-    uuid = int(uuid)
+    try:
+        uuid = int(uuid)
+    except ValueError:
+        # something other than a standard custom is was sent from thr third-party.
+        # This should be checked/dumped/disconnected.
+        log(f'BAD UUID: "{uuid}"')
+        return None
 
     log('>', uuid)
     # Locking is not required with a async loop.
@@ -164,34 +198,6 @@ class AUTH:
     # All good users should have an INIT state - allowing an open connection.
     INIT = 1
 
-# unique data for a connecting user
-USER_DATA = {
-    'test2': {
-        # settings for each unit.
-        'details': {
-            'contrib.connect.auth.Password': { 'password': b'horse'},
-            'contrib.connect.qr.Authed': { "secret": 'gegoyuja4liponix' },
-        }
-    },
-    'test1': {
-        'details': {
-            'contrib.connect.auth.Password': { 'password': b'666'},
-            'contrib.connect.sms.TextLocalAnnounce': {
-                'tel': '447480924803',
-                'debug': False,
-                #'reply': 'http://3deb9232.ngrok.io'
-            }#'debug': False },
-        }
-    }
-}
-
-SESSIONS = {}
-
-# A Cache of python discovered routines
-ROUTINES = {}
-
-RAISE = 'raise'
-CONTINUE = 'continue'
 
 
 class Handler(object):
@@ -364,7 +370,12 @@ class SessionManager(Handler):
 
         current = self.get_current_routine(name, session, client_space)
         session_stash = session[name]
-        current.recv_session(session, session_stash)
+        try:
+            current.recv_session(session, session_stash)
+        except AttributeError as e:
+            self.log(f'!! --\ncurrent routine is not correct for "{name}": "{current}"')
+            # Broken routine runner - end of current routine
+            return None
         # Store the active handler unit
         session['routine'] = current
         # Store the current proc for step actuation.
