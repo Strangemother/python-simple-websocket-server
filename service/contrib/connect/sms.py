@@ -65,6 +65,9 @@ class TextLocalAnnounce(TextLocal):
 
         return send_result
 
+    def recv_msg(self, payload, binary=False):
+        if payload[0] == 'reply':
+            self.assert_valid()
 
 SMS_API = "https://api.txtlocal.com"
 
