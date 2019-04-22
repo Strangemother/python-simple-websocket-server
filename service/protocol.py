@@ -257,7 +257,7 @@ class MyServerProtocol(ServerProtocolReporter, SendMixin):
         if content[0] == 'receipt':
             connect.message(self.uuid, content)
 
-        self.send_text(content)
+        self.send_text(f"SESSION_MESSAGE: {content}")
 
     def get_headers(self, request):
         headers = {}

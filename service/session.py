@@ -140,7 +140,7 @@ def recv_session_message(msg):
     try:
         proto = cache['protocol']
         # protocol.MyServerProtocol.session_message
-        proto.session_message(ret)
+        proto.session_message(args)
     except TypeError as e:
         # dead protocol.
         log(f'\n\n --- Failed message to {uuid}\n{ret}\n{e}::{MEM.keys()}')
