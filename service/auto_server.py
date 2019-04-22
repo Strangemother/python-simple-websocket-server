@@ -7,6 +7,9 @@ from protocol import MyServerProtocol
 from factory import BroadcastServerFactory
 import config
 from wlog import color_plog
+from manager import manager_loop_client
+
+session_pipes = None
 
 log = color_plog('white').announce(__spec__)
 
@@ -18,24 +21,6 @@ def keyboard_interrupt_watch():
         yield from asyncio.sleep(1)
         # log("First Worker Executed")
 
-@asyncio.coroutine
-def manager_loop(factory, pipes):
-    """
-    """
-
-    while True:
-        yield from asyncio.sleep(1)
-        clients = factory.clients
-        for cl in clients:
-            cl.send_text('Manager said hello')
-        # log("First Worker Executed")
-
-
-# @asyncio.coroutine
-# def secondWorker():
-#     while True:
-#         yield from asyncio.sleep(1)
-#         log("Second Worker Executed")
 
 def find_address(conf, ip, port):
     """Extract the ip address and port for the server from the given config
@@ -52,7 +37,6 @@ def find_address(conf, ip, port):
     return ip, port
 
 
-
 def run(port=None, ip=None, keyboard_watch=True, **kw):
     """Run the server, using the given ip,port or extracting from the config.
     if the ip,port are given - and found within the config, the config arguments
@@ -65,7 +49,7 @@ def run(port=None, ip=None, keyboard_watch=True, **kw):
 
     log('factory', uri)
 
-    server_kwargs =dict(server=kw.get('name', 'No Name'))
+    server_kwargs = dict(server=kw.get('name', 'No Name'))
     factory = kw.get('factory', BroadcastServerFactory(uri, **server_kwargs))
     factory.protocol = kw.get('protocol', MyServerProtocol)
     start_loop(factory, ip, port, keyboard_watch)
@@ -99,14 +83,13 @@ def start_loop(factory, ip, port, keyboard_watch=True):
     coro_gen = loop.create_server(factory, ip, port)
     server = loop.run_until_complete(coro_gen)
 
-    pipes = connect.start()
+    session_pipes = connect.start()
 
     if keyboard_watch:
         log('CTRL+C watch')
         asyncio.ensure_future(keyboard_interrupt_watch())
 
-    asyncio.ensure_future(manager_loop(factory, pipes))
-
+    asyncio.ensure_future(manager_loop_client(factory, session_pipes))
 
     try:
         log('Step into run run_forever')
