@@ -15,12 +15,14 @@ An option to provide a 2factor layer for incoming clients sends the incoming use
 
 In this case the client/user/visitor should hae already given their number to the owner service - through a previously trusted form.
 
+
 ### Confirm
 
 Send the client a text message confirming the socket activity:
 
     > SOCKET: confirm > continue
     ! send text to user "You've just logged in"
+
 
 ### Confirm Reply
 
