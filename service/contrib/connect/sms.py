@@ -1,5 +1,5 @@
 
-from contrib.base import SessionCallable
+from service.contrib.base import SessionCallable
 import urllib.parse
 import urllib.request
 import uuid;

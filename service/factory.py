@@ -1,6 +1,6 @@
 from autobahn.asyncio.websocket import WebSocketServerFactory
 
-from wlog import color_plog
+from service.wlog import color_plog
 log = color_plog('yellow').announce(__spec__)
 
 

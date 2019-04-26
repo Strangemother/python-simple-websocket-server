@@ -8,7 +8,7 @@ token matches the internal generated token (based upon the secret), assert_valid
 import sys
 
 
-from contrib.base import SessionCallable
+from service.contrib.base import SessionCallable
 
 sys.path.append('C:\\Users\\jay\\Documents\\projects\\websocket\\qr')
 import authenticator as au

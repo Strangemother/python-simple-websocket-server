@@ -2,12 +2,16 @@ import asyncio
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from multiprocessing import Process
 
-import connect
-from protocol import MyServerProtocol
-from factory import BroadcastServerFactory
-import config
-from wlog import color_plog
-from manager import manager_loop_client
+from service.protocol import MyServerProtocol
+from service.factory import BroadcastServerFactory
+from service import connect
+from service import config
+from service.wlog import color_plog
+
+import sys
+sys.path.append('C:/Users/jay/Documents/projects/websocket/manager')
+
+from server import manager_loop_client
 
 session_pipes = None
 

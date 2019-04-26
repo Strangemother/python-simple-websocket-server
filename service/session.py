@@ -7,10 +7,10 @@ socket session happening elsewhere.
 from multiprocessing import Process, Pipe, Lock
 from datetime import datetime
 from pydoc import locate
-import error
+from service import error
 import asyncio
 
-from wlog import color_plog
+from service.wlog import color_plog
 
 MEM = {}
 # unique data for a connecting user
@@ -29,7 +29,11 @@ USER_DATA = {
                 'tel': '447480924803',
                 #'debug': False,
                 #'reply': 'http://3deb9232.ngrok.io'
-            }#'debug': False },
+            }, #'debug': False },
+            'contrib.connect.email.Announce': {
+                'email': 'jay@strangemother.com'
+            }
+
         }
     }
 }

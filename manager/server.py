@@ -11,8 +11,8 @@ PORT = 9018
 ADDRESS = '127.0.0.1'
 AUTH = b'84ytnp9qyn8p3tu8qcp394tpmj'
 
-from wlog import color_plog
-log = color_plog('white')#.announce(__spec__)
+from service import wlog
+log = wlog.color_plog('white')#.announce(__spec__)
 
 
 class MainManager(BaseManager):
@@ -48,6 +48,9 @@ MainManager.register('get_queue', callable=get_queue)
 MainManager.register('hello', hello)
 MainManager.register('post', post)
 MainManager.register('session_pipes', session_pipes)
+
+def register(name, func):
+    MainManager.register(name, func)
 
 
 @asyncio.coroutine

@@ -1,6 +1,6 @@
 from websocket import create_connection
 
-from wlog import color_plog
+from service.wlog import color_plog
 log = color_plog('red').announce(__spec__)
 
 # A record of users associated with an API key.
@@ -30,9 +30,10 @@ CLIENTS = {
                 hosts=('127.0.0.1', '192.168.1.104', 'localhost', '*'),
                 # modules for authenticating the onConnect; AUTH 0.
                 connect=(
-                        ('contrib.connect.auth.Password',{ 'password': b'secret'}),
-                        ('contrib.connect.qr.Authed', { "secret": 'gegoyuja4liponix' }, ),
-                        ('contrib.connect.sms.TextLocal',
+                        ('service.contrib.connect.email.Announce', {},),
+                        ('service.contrib.connect.auth.Password',{ 'password': b'secret'}),
+                        ('service.contrib.connect.totp.Authed', { "secret": 'gegoyuja4liponix' }, ),
+                        ('service.contrib.connect.sms.TextLocal',
                             {
                                 'apikey': '/TCFoNjKR6I-RdT4GsnSVj9oEjzuRfU08UZ1lYBYrH',
                                 # The user must reply on text.
@@ -40,7 +41,7 @@ CLIENTS = {
                                 'ask_random': True,
                                 # catch-all endpoint for receipts
                                 'receipt_url': 'http://one.briansdojo.co.uk:8000/sms/receipt/',
-                                'debug': True,
+                                #'debug': True,
                             },),
                     )
             ),
@@ -50,7 +51,7 @@ CLIENTS = {
                 entries=('key123',),
                 hosts=('127.0.0.1',),
                 connect=(
-                        ('contrib.connect.auth.Password', { 'password': b'secret'}),
+                        ('service.contrib.connect.auth.Password', { 'password': b'secret'}),
                     )
             )
     }

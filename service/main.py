@@ -4,8 +4,8 @@ This is a sample for qpython webapp
 """
 from optparse import OptionParser
 
-from wlog import plog as log
-from auto_server import run
+from service.wlog import plog as log
+from service.auto_server import run
 
 
 parser = OptionParser()
@@ -35,7 +35,9 @@ def process_run(options=None, *args, **kw):
     run(**kw)
 
 
-def main(options, args):
+def main(options=None, args=None):
+    if options is None:
+      options, args = parsed
     log('Create service')
     global pr
     pr = process_run(options)

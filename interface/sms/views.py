@@ -14,19 +14,9 @@ import base64
 print('sms view connecting to session remote manager')
 from multiprocessing.managers import BaseManager
 
-def manager_connect(address_pair=None):
-    address = address_pair or ('127.0.0.1', 9018)
-    m = BaseManager(address=address, authkey=b'84ytnp9qyn8p3tu8qcp394tpmj')
-    # register accepted functions
-    m.register('post')
-    m.register('hello')
-
-    m.connect()
-    m.hello()
-    print(f"interface.sms.view connected to manager {address}")
-    return m
-
-m = manager_connect()
+import sys
+sys.path.append("C:/Users/jay/Documents/projects/websocket/manager/")
+from client import man
 
 class IndexView(TemplateView):
     template_name = "sms/index.html"
@@ -145,7 +135,7 @@ class ReplyView(TemplateView):
             mo.save()
             md =  model_to_dict(mo)
             md['custom'] = mo.custom1
-            m.post('reply', md)
+            man.post('reply', md)
         else:
             print(f.errors)
 

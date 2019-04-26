@@ -74,6 +74,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'interface.wsgi.application'
 
+EMAIL_HOST = 'mail.strangemother.org'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'webmaster@strangemother.org'
+EMAIL_HOST_PASSWORD = 'FHoCLIlke)Ft'
+EMAIL_USE_TLS = True
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases

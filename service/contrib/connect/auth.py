@@ -37,7 +37,7 @@ It can be applied to to the client API persistent record:
 used by `client.get_client(uuid, request)`
 
 """
-from contrib.base import SessionCallable
+from service.contrib.base import SessionCallable
 
 
 class Password(SessionCallable):

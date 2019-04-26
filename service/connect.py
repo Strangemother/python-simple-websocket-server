@@ -1,9 +1,9 @@
 import asyncio
 from multiprocessing import Process, Pipe, Lock
 
-from session import SessionManager, start_process, pipe_monitor, MEM
-from client import get_client
-from wlog import color_plog
+from service.session import SessionManager, start_process, pipe_monitor, MEM
+from service.client import get_client
+from service.wlog import color_plog
 
 
 log = color_plog('cyan').announce(__spec__)
