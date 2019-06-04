@@ -1,1 +1,1 @@
-from . import config, contrib, connect, factory, main, protocol, session, wlog as log
+from . import config, contrib, main, session, wlog as log
