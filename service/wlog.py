@@ -22,7 +22,7 @@ class Colors:
 
 
 logging.basicConfig(level=logging.DEBUG)
-
+logger = logging.getLogger(__name__)
 
 def log(*a, prefix='', color=None):
     if color is None:
@@ -31,13 +31,13 @@ def log(*a, prefix='', color=None):
         color = getattr(Colors, color)
 
     if color is not None:
-        logging.sys.stdout.write(color)
+        logger.sys.stdout.write(color)
 
-    logging.info("{}{}".format(prefix, ' '.join(map(str, a))))
+    logger.info("{}{}".format(prefix, ' '.join(map(str, a))))
     if color:
-        logging.sys.stdout.write(Style.RESET_ALL)
+        logger.sys.stdout.write(Style.RESET_ALL)
 
-warn = logging.warn
+warn = logger.warn
 
 
 def plog(*a, prefix='  -- ', **kw):

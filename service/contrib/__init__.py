@@ -1,1 +1,1 @@
-from service import connect
+from service.session import connect

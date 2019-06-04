@@ -4,8 +4,10 @@ import sys
 
 from service.contrib.base import SessionCallable
 
-sys.path.append('C:/Users/jay/Documents/projects/websocket/manager')
-from client import send_event
+sys.path.append('C:/Users/jay/Documents/projects/websocket')
+from manager import client
+print('\n\nclient', client)
+from manager.client import send_event
 
 
 class Announce(SessionCallable):
